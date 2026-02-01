@@ -1,0 +1,117 @@
+/* ===============================
+   PANEL PENALES
+================================ */
+
+#panel-penales {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: none;
+}
+
+/* Contenedor */
+.penales-wrapper {
+  width: fit-content;
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Fila */
+.penales-row {
+  display: flex;
+  align-items: center;
+}
+
+/* Nombre equipo */
+.penales-equipo {
+  min-width: 170px;
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  
+  color: var(--color-texto-secundario);
+      background: linear-gradient(
+        to bottom,
+        var(--color-secundary-dark) 0%,
+        var(--color-secundario) 50%,
+        var(--color-secundary-dark) 100%
+    );
+
+    position: relative;
+}
+
+
+/* Equipo 1 (arriba) - Corte inferior izquierdo */
+.penales-row:first-child .penales-equipo {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0px 100%,
+    0 calc(100% - 12px)
+  );
+}
+
+/* Equipo 2 (abajo) - Corte superior izquierdo */
+.penales-row:last-child .penales-equipo {
+  clip-path: polygon(
+    0px 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 12px
+  );
+}
+
+
+/* Goles de penales */
+.penales-score {
+  width: 56px;
+  padding: 2px 2px;
+  text-align: center;
+  font-size: 30px;
+  font-weight: bold;
+  background: var(--color-terciario);
+  color: var(--color-texto-secundario);
+}
+
+/* Zona círculos */
+.penales-shots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-primary-dark-70); /* opcional leve separador */
+}
+
+/* Círculos base (pendiente) */
+.penal-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+
+  background-color: var(--color-primary-dark-80);
+
+  border: none;                 /* 🔴 clave */
+  box-sizing: border-box;       /* 🔴 clave */
+  background-clip: padding-box;/* 🔴 clave */
+
+  display: inline-block;
+}
+
+
+/* Gol */
+.penal-dot.is-goal {
+  background-color: #11ED11; /* naranja más claro */
+  box-shadow: 0 0 10px rgba(255, 140, 26, 0.65);
+}
+
+
+/* Fallo */
+.penal-dot.is-miss {
+  background-color: #FF0000; /* rojo oscuro legible */
+  box-shadow: 0 0 6px rgba(139, 30, 30, 0.4);
+}

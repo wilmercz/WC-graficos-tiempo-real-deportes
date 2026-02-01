@@ -1,0 +1,151 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * MAIN CSS - Variables Globales y Base
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ========== VARIABLES GLOBALES ========== */
+:root {
+    /* Colores (actualizados desde Firebase) */
+    --color-primario: #FF6B00;
+    --color-secundario: #000000;
+    --color-terciario: #000000;
+    --color-texto-primario: #FFFFFF;
+    --color-texto-secundario: #CCCCCC;
+    /* === VARIANTES AUTOMÁTICAS === */
+    --color-primary-dark: color-mix(
+        in srgb,
+        var(--color-primario),
+        #000 15%
+    );
+       /* === VARIANTES AUTOMÁTICAS === */
+    --color-secundary-dark: color-mix(
+        in srgb,
+        var(--color-secundario),
+        #000 25%
+    );
+
+    /* Oscuros fuertes para fondos (penales) */
+    --color-primary-dark-70: color-mix(in srgb, var(--color-primario), #000 70%);
+    --color-primary-dark-80: color-mix(in srgb, var(--color-primario), #000 80%);
+
+
+    /* Escala global (actualizada desde Firebase) */
+    --escala: 1.0;
+    
+    /* Animaciones (actualizadas desde Firebase) */
+    --animacion-duracion: 500ms;
+    --animacion-tipo: ease-in-out;
+    
+    /* Base responsive */
+    --base-font-size: 16px;
+    
+    /* Sombras */
+    --sombra-suave: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --sombra-media: 0 4px 16px rgba(0, 0, 0, 0.25);
+    --sombra-fuerte: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ========== RESET Y BASE ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: var(--base-font-size);
+}
+
+body {
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    background: transparent; /* Transparente para overlay */
+    color: var(--color-texto-primario);
+    overflow: hidden; /* Sin scroll en overlay */
+    width: 100vw;
+    height: 100vh;
+}
+
+/* ========== CONTENEDOR PRINCIPAL ========== */
+#overlay-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ========== PANELES BASE ========== */
+.panel {
+    position: absolute;
+    display: none; /* Oculto por defecto */
+    transition: opacity var(--animacion-duracion) var(--animacion-tipo);
+}
+
+/* Estado de paneles */
+.panel-enter {
+    animation-duration: var(--animacion-duracion);
+    animation-timing-function: var(--animacion-tipo);
+    animation-fill-mode: both;
+}
+
+.panel-exit {
+    animation-duration: var(--animacion-duracion);
+    animation-timing-function: var(--animacion-tipo);
+    animation-fill-mode: both;
+}
+
+/* ========== UTILIDADES ========== */
+.text-primary {
+    color: var(--color-texto-primario);
+}
+
+.text-secondary {
+    color: var(--color-texto-secundario);
+}
+
+.bg-primary {
+    background-color: var(--color-primario);
+}
+
+.bg-secondary {
+    background-color: var(--color-secundario);
+}
+
+.bg-tertiary {
+    background-color: var(--color-terciario);
+}
+
+.shadow-soft {
+    box-shadow: var(--sombra-suave);
+}
+
+.shadow-medium {
+    box-shadow: var(--sombra-media);
+}
+
+.shadow-strong {
+    box-shadow: var(--sombra-fuerte);
+}
+
+/* Escalado aplicado a elementos */
+.scaled {
+    transform: scale(var(--escala));
+    transform-origin: center;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1280px) {
+    :root {
+        --base-font-size: 14px;
+    }
+}
+
+@media (min-width: 2560px) {
+    :root {
+        --base-font-size: 20px;
+    }
+}
+
+/* ========== IMPORTAR OTROS CSS ========== */
+/* Las animaciones se cargarán desde animations.css */
+/* Los paneles individuales se cargarán desde sus propios archivos */

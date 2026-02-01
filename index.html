@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARKI Deportes - Overlay</title>
+    
+    <!-- Firebase SDK (Compat Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Estilos CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/panel-logos.css">
+    <link rel="stylesheet" href="styles/panel-marcador.css">
+    <link rel="stylesheet" href="styles/panel-penales.css">
+    <link rel="stylesheet" href="styles/panel-tercios.css">
+</head>
+<body>
+    <!-- Contenedor Principal del Overlay -->
+    <div id="overlay-container">
+        
+        <!-- Panel 1: Logos -->
+        <div id="panel-logos" class="panel">
+            <!-- Contenido generado por panel-logos.js -->
+        </div>
+        
+        <!-- Panel 2: Marcador -->
+        <div id="panel-marcador" class="panel">
+            <!-- Contenido por implementar --> 
+        </div>
+        
+        <!-- Panel 3: Penales -->
+        <div id="panel-penales" class="panel">
+            <!-- Contenido por implementar -->
+            <div class="penales-placeholder">
+                <p>Panel Penales (Por Implementar)</p>
+            </div>
+        </div>
+        
+        <!-- Panel 4: Tercios Inferiores -->
+        <div id="panel-tercios" class="panel">
+            <!-- Contenido por implementar -->
+            <div class="tercios-placeholder">
+                <p>Panel Tercios (Por Implementar)</p>
+            </div>
+        </div>
+        
+    </div>
+
+  
+
+    <!-- Panel de Debug (Toggle con tecla 'D') -->
+    <div id="debug-panel" style="
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.9);
+        color: #0f0;
+        font-family: monospace;
+        font-size: 12px;
+        border-radius: 8px;
+        max-width: 400px;
+        display: none;
+        z-index: 9999;
+        border: 1px solid #0f0;
+    ">
+        <div style="margin-bottom: 10px; font-weight: bold;">🐛 DEBUG INFO</div>
+        <div id="debug-content">
+            <div>Panel Activo: <span id="debug-panel-activo">-</span></div>
+            <div>Escala: <span id="debug-escala">-</span></div>
+            <div>Logos Activos: <span id="debug-logos">-</span></div>
+            <div>Rotación: <span id="debug-rotacion">-</span></div>
+        </div>
+    </div>
+
+    <!-- Módulos JavaScript -->
+    <script type="module">
+        // Importar configuración y módulos
+        import { firebaseConfig, FIREBASE_PATH } from './config/firebase-config.js';
+        import ConfigManager from './modules/config-manager.js';
+        import ScaleManager from './modules/scale-manager.js';
+        import PanelController from './modules/panel-controller.js';
+        import PanelLogos from './modules/panel-logos.js';
+        import PanelMarcador from './modules/panel-marcador.js';
+        import PanelPenales from './modules/panel-penales.js';
+
+
+        // Referencias DOM
+        const connectionIndicator = document.getElementById('connection-indicator');
+        const debugPanel = document.getElementById('debug-panel');
+
+        console.log('🚀 Iniciando aplicación ARKI Deportes Overlay...');
+
+        // ===== INICIALIZAR FIREBASE =====
+        console.log('🔥 Inicializando Firebase...');
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ===== MONITOR DE CONEXIÓN =====
+        db.ref('.info/connected').on('value', (snapshot) => {
+            if (snapshot.val() === true) {
+                console.log('🟢 Conectado a Firebase');
+                connectionIndicator.style.background = 'rgba(0, 255, 0, 0.2)';
+                connectionIndicator.style.color = '#0f0';
+                connectionIndicator.style.borderColor = '#0f0';
+                connectionIndicator.textContent = '🟢 Conectado';
+            } else {
+                console.log('🔴 Desconectado de Firebase');
+                connectionIndicator.style.background = 'rgba(255, 0, 0, 0.2)';
+                connectionIndicator.style.color = '#f00';
+                connectionIndicator.style.borderColor = '#f00';
+                connectionIndicator.textContent = '🔴 Desconectado';
+            }
+        });
+
+        // ===== INICIALIZAR MANAGERS =====
+        console.log('⚙️ Inicializando ConfigManager...');
+        const configManager = new ConfigManager(db, FIREBASE_PATH.CONFIGURACION_OVERLAYWEB);
+        configManager.initialize();
+
+        console.log('📏 Inicializando ScaleManager...');
+        const scaleManager = new ScaleManager(configManager);
+        scaleManager.initialize();
+
+        console.log('🎛️ Inicializando PanelController...');
+        const panelController = new PanelController(configManager);
+        panelController.initialize();
+
+        console.log('🎨 Inicializando PanelLogos...');
+        const panelLogos = new PanelLogos(configManager);
+        panelLogos.initialize();
+
+        console.log('🏟️ Inicializando PanelMarcador...');
+        const panelMarcador = new PanelMarcador(configManager, db);
+        panelMarcador.initialize();
+
+        console.log('🥅 Inicializando PanelPenales...');
+            const panelPenales = new PanelPenales(configManager, db);
+            panelPenales.initialize();
+
+
+        // ===== DEBUG PANEL =====
+        // Toggle debug con tecla 'D'
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'd' || e.key === 'D') {
+                debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+
+        // Actualizar debug info
+        configManager.onUpdate((config) => {
+            document.getElementById('debug-panel-activo').textContent = config.panelActivo;
+            document.getElementById('debug-escala').textContent = config.escalaGlobal + 'x';
+            
+            const logosStatus = panelLogos.getStatus();
+            document.getElementById('debug-logos').textContent = `${logosStatus.totalLogos} logos`;
+            document.getElementById('debug-rotacion').textContent = logosStatus.isRotating ? 'SÍ ✅' : 'NO ⏸️';
+        });
+
+        console.log('✅ Aplicación iniciada correctamente');
+        console.log('💡 Presiona "D" para mostrar/ocultar panel de debug');
+
+        // Hacer accesible globalmente para debugging
+        window.appManagers = {
+            configManager,
+            scaleManager,
+            panelController,
+            panelLogos,
+            panelMarcador,
+            panelPenales
+        };
+     
+    </script>
+</body>
+</html>

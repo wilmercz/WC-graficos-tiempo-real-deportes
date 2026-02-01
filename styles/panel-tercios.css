@@ -1,0 +1,20 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PANEL TERCIOS CSS - Estilos del Panel de Tercios Inferiores
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * TODO: Implementar estilos del panel de tercios inferiores
+ * 
+ * Este archivo contendrá los estilos para:
+ * - Layout de tercios inferiores
+ * - Contenido por definir
+ */
+
+/* ========== PLACEHOLDER ========== */
+/* Los estilos se implementarán cuando se defina el panel de tercios */
+
+#panel-tercios {
+    position: absolute;
+    /* Posición por definir */
+    display: none;
+}

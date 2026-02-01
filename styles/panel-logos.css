@@ -1,0 +1,139 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PANEL LOGOS CSS - Estilos del Panel de Logos
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ========== CONTENEDOR PRINCIPAL ========== */
+#panel-logos {
+    position: absolute;
+    top: 5vh;
+    left: 50%;
+    transform: translateX(-50%) scale(var(--escala));
+    transform-origin: top center;
+    width: calc(30vw * var(--escala));
+    max-width: calc(500px * var(--escala));
+    z-index: 100;
+}
+
+/* ========== WRAPPER ========== */
+.logos-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: calc(20px * var(--escala));
+    padding: calc(20px * var(--escala));
+    box-shadow: var(--sombra-fuerte);
+    border: calc(2px * var(--escala)) solid var(--color-primario);
+}
+
+/* ========== DISPLAY DE LOGO ========== */
+.logo-display {
+    width: 100%;
+    height: calc(150px * var(--escala));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ========== IMAGEN DE LOGO ========== */
+.logo-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* ========== EMOJI PLACEHOLDER ========== */
+.logo-emoji {
+    font-size: calc(8rem * var(--escala));
+    line-height: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 
+        0 0 calc(20px * var(--escala)) rgba(255, 107, 0, 0.8),
+        0 0 calc(40px * var(--escala)) rgba(255, 107, 0, 0.4);
+}
+
+/* ========== ESTADOS DE TRANSICIÓN ========== */
+.logo-display.logo-enter,
+.logo-display.logo-exit {
+    position: relative;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1280px) {
+    #panel-logos {
+        width: calc(35vw * var(--escala));
+    }
+    
+    .logo-display {
+        height: calc(120px * var(--escala));
+    }
+    
+    .logo-emoji {
+        font-size: calc(6rem * var(--escala));
+    }
+}
+
+@media (min-width: 2560px) {
+    #panel-logos {
+        width: calc(25vw * var(--escala));
+    }
+    
+    .logo-display {
+        height: calc(200px * var(--escala));
+    }
+    
+    .logo-emoji {
+        font-size: calc(10rem * var(--escala));
+    }
+}
+
+/* ========== EFECTOS ESPECIALES ========== */
+
+/* Brillo sutil en hover (solo visible si se usa mouse) */
+.logos-wrapper:hover {
+    box-shadow: 
+        var(--sombra-fuerte),
+        0 0 calc(30px * var(--escala)) rgba(255, 107, 0, 0.3);
+}
+
+/* Efecto de carga para imágenes */
+.logo-image {
+    opacity: 0;
+    transition: opacity 300ms ease-in-out;
+}
+
+.logo-image.loaded {
+    opacity: 1;
+}
+
+/* ========== INDICADOR DE ROTACIÓN (Opcional) ========== */
+.rotation-indicator {
+    position: absolute;
+    bottom: calc(-30px * var(--escala));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: calc(8px * var(--escala));
+}
+
+.rotation-dot {
+    width: calc(8px * var(--escala));
+    height: calc(8px * var(--escala));
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: background 300ms ease;
+}
+
+.rotation-dot.active {
+    background: var(--color-primario);
+    box-shadow: 0 0 calc(10px * var(--escala)) var(--color-primario);
+}

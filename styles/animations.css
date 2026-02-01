@@ -1,0 +1,259 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ANIMATIONS CSS - Animaciones para Paneles y Logos
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ========== ANIMACIONES DE PANELES: FADE ========== */
+.panel-enter-fade {
+    animation-name: fadeIn;
+}
+
+.panel-exit-fade {
+    animation-name: fadeOut;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* ========== ANIMACIONES DE PANELES: SLIDE ========== */
+.panel-enter-slide {
+    animation-name: slideInFromLeft;
+}
+
+.panel-exit-slide {
+    animation-name: slideOutToRight;
+}
+
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* ========== ANIMACIONES DE PANELES: SCALE ========== */
+.panel-enter-scale {
+    animation-name: scaleIn;
+}
+
+.panel-exit-scale {
+    animation-name: scaleOut;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleOut {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* ========== ANIMACIONES DE LOGOS: FADE ========== */
+.logo-enter-fade {
+    animation: fadeIn 300ms ease-in-out;
+}
+
+.logo-exit-fade {
+    animation: fadeOut 300ms ease-in-out;
+}
+
+/* ========== ANIMACIONES DE LOGOS: SLIDE ========== */
+.logo-enter-slide {
+    animation: slideInFromRight 300ms ease-in-out;
+}
+
+.logo-exit-slide {
+    animation: slideOutToLeft 300ms ease-in-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+/* ========== ANIMACIONES DE LOGOS: SCALE ========== */
+.logo-enter-scale {
+    animation: logoScaleIn 300ms ease-in-out;
+}
+
+.logo-exit-scale {
+    animation: logoScaleOut 300ms ease-in-out;
+}
+
+@keyframes logoScaleIn {
+    from {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes logoScaleOut {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* ========== ANIMACIONES DE LOGOS: FLIP ========== */
+.logo-enter-flip {
+    animation: flipIn 300ms ease-in-out;
+}
+
+.logo-exit-flip {
+    animation: flipOut 300ms ease-in-out;
+}
+
+@keyframes flipIn {
+    from {
+        transform: rotateY(90deg);
+        opacity: 0;
+    }
+    to {
+        transform: rotateY(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes flipOut {
+    from {
+        transform: rotateY(0deg);
+        opacity: 1;
+    }
+    to {
+        transform: rotateY(-90deg);
+        opacity: 0;
+    }
+}
+
+/* ========== ANIMACIONES ESPECIALES ========== */
+
+/* Animación de gol (para usar en marcador) */
+@keyframes goalCelebration {
+    0%, 100% {
+        transform: scale(1);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: scale(1.1) rotate(-3deg);
+    }
+    20%, 40%, 60%, 80% {
+        transform: scale(1.1) rotate(3deg);
+    }
+}
+
+.goal-animation {
+    animation: goalCelebration 600ms ease-in-out;
+}
+
+/* Animación de tarjeta */
+@keyframes cardShow {
+    from {
+        transform: translateY(-50px) rotate(-15deg);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.card-animation {
+    animation: cardShow 400ms ease-out;
+}
+
+/* Parpadeo suave (para indicadores) */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Rotación continua (para spinners o elementos decorativos) */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin-animation {
+    animation: spin 2s linear infinite;
+}
