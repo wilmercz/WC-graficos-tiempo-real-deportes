@@ -8,9 +8,9 @@
 #panel-logos {
     position: absolute;
     top: 5vh;
-    left: 50%;
-    transform: translateX(-50%) scale(var(--escala));
-    transform-origin: top center;
+    right: 3vw;
+    transform: scale(var(--escala));
+    transform-origin: top right;
     width: calc(30vw * var(--escala));
     max-width: calc(500px * var(--escala));
     z-index: 100;
