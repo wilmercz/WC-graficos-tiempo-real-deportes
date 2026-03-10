@@ -2,19 +2,51 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * PANEL TERCIOS CSS - Estilos del Panel de Tercios Inferiores
  * ═══════════════════════════════════════════════════════════════════════════
- * 
- * TODO: Implementar estilos del panel de tercios inferiores
- * 
- * Este archivo contendrá los estilos para:
- * - Layout de tercios inferiores
- * - Contenido por definir
  */
-
-/* ========== PLACEHOLDER ========== */
-/* Los estilos se implementarán cuando se defina el panel de tercios */
 
 #panel-tercios {
     position: absolute;
-    /* Posición por definir */
-    display: none;
+    bottom: 8vh;
+    left: 50%;
+    /* Inicialmente movido hacia abajo y oculto */
+    transform: translateX(-50%) translateY(100%);
+    transform-origin: bottom center;
+    display: block; /* Siempre 'block' para que la transición de transform funcione */
+    opacity: 0;
+    z-index: 200; /* Por encima de otros paneles */
+    transition: opacity var(--animacion-duracion) var(--animacion-tipo), transform var(--animacion-duracion) var(--animacion-tipo);
+    pointer-events: none; /* No debe ser clickeable */
+}
+
+/* Estado visible que activará el JS */
+#panel-tercios.visible {
+    opacity: 1;
+    /* Sube a su posición final */
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.tercio-wrapper {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(
+        to bottom,
+        var(--color-secundary-dark) 0%,
+        var(--color-secundario) 50%,
+        var(--color-secundary-dark) 100%
+    );
+    padding: 12px 40px;
+    border-radius: 6px;
+    box-shadow: var(--sombra-media);
+    border-top: 3px solid var(--color-primario);
+}
+
+.tercio-texto {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--color-texto-primario);
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(0,0,0,0.5);
 }
