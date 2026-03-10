@@ -103,6 +103,10 @@ body {
     color: var(--color-texto-secundario);
 }
 
+.text-accent {
+    color: var(--color-primario);
+}
+
 .bg-primary {
     background-color: var(--color-primario);
 }

@@ -96,65 +96,115 @@ class PanelMarcador {
      */
     updateEstadoTiempo(data) {
         const estadoEl = document.getElementById('marcador-estado');
+        const numeroDeTiempo = data.NumeroDeTiempo;
 
-        if (!data.CRONOMETRANDO) {
-            if (data.TIEMPOSJUGADOS === 0) {
-                estadoEl.textContent = 'POR JUGARSE';
-            } else {
-                estadoEl.textContent = 'ENTRETIEMPO';
-            }
-            this.stopTimer();
-            return;
+        this.stopTimer(); // Detener siempre el timer anterior para evitar duplicados
+
+        // Gestionar color del texto. Usamos .style.color para tener máxima prioridad
+        // y evitar problemas de especificidad si el ID #marcador-estado tiene un color en CSS.
+        if (numeroDeTiempo === '1T' || numeroDeTiempo === '3T') {
+            // Color normal (gris claro) para el cronómetro
+            estadoEl.style.color = 'var(--color-texto-secundario)';
+        } else {
+            // Color naranja de acento para los demás estados
+            estadoEl.style.color = 'var(--color-primario)';
         }
 
-        this.startTimer(data);
+        switch (numeroDeTiempo) {
+            case '0T':
+                estadoEl.textContent = 'POR JUGARSE';
+                break;
+            
+            case '1T':
+                // Inicia el cronómetro para el primer tiempo, mostrando "1T"
+                this.startTimer(data, '1T');
+                break;
+
+            case '2T':
+                estadoEl.textContent = 'ENTRETIEMPO';
+                break;
+
+            case '3T':
+                // Inicia el cronómetro para el segundo tiempo, mostrando "2T"
+                this.startTimer(data, '2T');
+                break;
+
+            case '4T':
+                estadoEl.textContent = 'FINALIZÓ';
+                break;
+
+            case '5T':
+                estadoEl.textContent = 'PENALES';
+                break;
+
+            default:
+                // Si el valor no es ninguno de los esperados, mostramos "POR JUGARSE" como estado inicial.
+                estadoEl.textContent = 'POR JUGARSE';
+                break;
+        }
     }
 
     
-    startTimer(data) {
-    this.stopTimer();
+    startTimer(data, periodText) {
+        this.stopTimer();
 
-    // ✅ Decide unidades (minutos vs segundos)
-    // Si TIEMPOJUEGO viene en minutos (45), lo convertimos a segundos
-    let tiempoJuego = Number(data.TIEMPOJUEGO ?? 45);
-    // Si tu Android ya lo guarda en segundos (2700), esto lo detecta
-    if (tiempoJuego > 200) { 
-        // probablemente ya está en segundos (ej: 2700)
-        // lo dejamos tal cual
-    } else {
-        // probablemente está en minutos (ej: 45)
-        tiempoJuego = tiempoJuego * 60;
-    }
+        // 1. LEER Y VALIDAR TIEMPOJUEGO
+        // Se asume que viene en minutos. Por defecto es 45.
+        let tiempoJuegoEnMinutos = Number(data.TIEMPOJUEGO);
 
-    // ✅ Nombre del tiempo (ajusta a tu campo real)
-    const numeroTiempo = data.NUMERO_TIEMPO || data.NumeroDeTiempo || '1T';
-
-    // ✅ Parse FECHA_PLAY string -> ms
-    const startMs = parseFechaPlayToMs(data.FECHA_PLAY);
-    if (startMs == null) {
-        console.warn('⛔ FECHA_PLAY inválida:', data.FECHA_PLAY);
-        document.getElementById('marcador-estado').textContent = `${numeroTiempo}   00:00`;
-        return;
-    }
-
-    this.intervalTimer = setInterval(() => {
-        const now = Date.now() + this.serverTimeOffset;
-        const elapsed = Math.max(0, Math.floor((now - startMs) / 1000)); // ✅ ya no NaN
-
-        const minutos = Math.floor(elapsed / 60);
-        const segundos = elapsed % 60;
-
-        let texto = `${numeroTiempo} • ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
-
-        // ✅ Tiempo extra cuando supera TIEMPOJUEGO
-        if (elapsed > tiempoJuego) {
-            const extra = Math.floor((elapsed - tiempoJuego) / 60);
-            if (extra > 0) texto += ` +${extra}`;
+        // Si no es un número válido o está vacío, usar 45.
+        if (isNaN(tiempoJuegoEnMinutos) || tiempoJuegoEnMinutos <= 0) {
+            tiempoJuegoEnMinutos = 45;
         }
 
-        document.getElementById('marcador-estado').textContent = texto;
-    }, 1000);
-}
+        // Si es mayor a 45 (ej. 90), lo limitamos a 45 para un solo tiempo.
+        if (tiempoJuegoEnMinutos > 45) {
+            tiempoJuegoEnMinutos = 45;
+        }
+        
+        const tiempoJuegoLimiteEnSegundos = tiempoJuegoEnMinutos * 60;
+
+        // Nombre del tiempo (1T, 2T)
+        const numeroTiempo = periodText || data.NumeroDeTiempo || '1T';
+
+        // Parsear la fecha de inicio
+        const startMs = parseFechaPlayToMs(data.FECHA_PLAY);
+        if (startMs == null) {
+            console.warn('⛔ FECHA_PLAY inválida:', data.FECHA_PLAY);
+            document.getElementById('marcador-estado').textContent = `${numeroTiempo} • 00:00`;
+            return;
+        }
+
+        this.intervalTimer = setInterval(() => {
+            const now = Date.now() + this.serverTimeOffset;
+            const elapsed = Math.max(0, Math.floor((now - startMs) / 1000));
+
+            // 2. LÍMITE DE SEGURIDAD (1 HORA)
+            if (elapsed > 3600) {
+                console.warn('⌛ Cronómetro detenido por superar 1 hora.');
+                this.stopTimer();
+                document.getElementById('marcador-estado').textContent = `${numeroTiempo} • ${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
+                return;
+            }
+
+            let texto;
+
+            // 3. LÓGICA DE TIEMPO REGULAR VS TIEMPO EXTRA
+            if (elapsed <= tiempoJuegoLimiteEnSegundos) {
+                const minutos = Math.floor(elapsed / 60);
+                const segundos = elapsed % 60;
+                texto = `${numeroTiempo} • ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+            } else {
+                const textoBase = `${numeroTiempo} • ${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
+                const segundosDeTiempoExtra = elapsed - tiempoJuegoLimiteEnSegundos;
+                const minutosDeTiempoExtra = Math.ceil(segundosDeTiempoExtra / 60);
+
+                texto = (minutosDeTiempoExtra > 0) ? `${textoBase} +${minutosDeTiempoExtra}` : textoBase;
+            }
+
+            document.getElementById('marcador-estado').textContent = texto;
+        }, 1000);
+    }
 
 
     stopTimer() {
