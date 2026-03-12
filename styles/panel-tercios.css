@@ -7,10 +7,10 @@
 #panel-tercios {
     position: absolute;
     bottom: 8vh;
-    left: 50%;
+    left: 40px;
     /* Inicialmente movido hacia abajo y oculto */
-    transform: translateX(-50%) translateY(100%);
-    transform-origin: bottom center;
+    transform: translateY(100%);
+    transform-origin: bottom left;
     display: block; /* Siempre 'block' para que la transición de transform funcione */
     opacity: 0;
     z-index: 200; /* Por encima de otros paneles */
@@ -22,31 +22,47 @@
 #panel-tercios.visible {
     opacity: 1;
     /* Sube a su posición final */
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
     pointer-events: auto;
 }
 
 .tercio-wrapper {
     font-family: Arial, Helvetica, sans-serif;
-    background: linear-gradient(
-        to bottom,
-        var(--color-secondary-dark) 0%,
-        var(--color-secundario) 50%,
-        var(--color-secondary-dark) 100%
-    );
-    padding: 12px 40px;
-    border-radius: 6px;
+    /* Fondo azul #193b77 con degradado radial */
+    background: radial-gradient(circle at 30% 50%, #193b77 0%, #0d2247 100%);
+    
+    padding: 8px 35px 8px 25px; /* Padding reducido y ajustado */
+    border-radius: 4px;
     box-shadow: var(--sombra-media);
-    border-top: 3px solid var(--color-primario);
+    
+    /* Inclinación del panel */
+    transform: skewX(-20deg);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Adorno izquierdo (Franja Naranja) */
+.tercio-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(to bottom, #ffa93d 0%, #ffdca3 50%, #ffa93d 100%);
 }
 
 .tercio-texto {
     font-size: 28px;
     font-weight: bold;
-    color: var(--color-texto-primario);
-    text-align: center;
+    color: #ffffff;
+    text-align: left;
     text-transform: uppercase;
     white-space: nowrap;
     letter-spacing: 1px;
-    text-shadow: 0 0 8px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    
+    /* Contrarrestar la inclinación para que el texto se lea recto */
+    transform: skewX(20deg);
+    display: block;
 }
