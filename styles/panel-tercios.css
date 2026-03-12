@@ -52,7 +52,14 @@
     background: linear-gradient(to bottom, #ffa93d 0%, #ffdca3 50%, #ffa93d 100%);
 }
 
-.tercio-texto {
+/* Contenedor para el texto que contrarresta la inclinación */
+.tercio-texto-container {
+    transform: skewX(20deg);
+    display: block;
+}
+
+/* Estilo base para ambas líneas de texto */
+.tercio-linea {
     font-size: 28px;
     font-weight: bold;
     color: #ffffff;
@@ -61,8 +68,13 @@
     white-space: nowrap;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-    
-    /* Contrarrestar la inclinación para que el texto se lea recto */
-    transform: skewX(20deg);
-    display: block;
+    line-height: 1.2; /* Espacio entre líneas si hay dos */
+}
+
+/* Estilo específico para la segunda línea */
+#tercio-linea2 {
+    font-size: 24px; /* Un poco más pequeña */
+    font-weight: normal; /* Menos énfasis */
+    text-transform: none; /* Capitalización normal */
+    letter-spacing: 0.5px;
 }
