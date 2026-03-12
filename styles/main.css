@@ -18,8 +18,8 @@
         var(--color-primario),
         #000 15%
     );
-       /* === VARIANTES AUTOMÁTICAS === */
-    --color-secundary-dark: color-mix(
+    /* === VARIANTES AUTOMÁTICAS === */
+    --color-secondary-dark: color-mix(
         in srgb,
         var(--color-secundario),
         #000 25%

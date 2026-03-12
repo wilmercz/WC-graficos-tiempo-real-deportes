@@ -30,9 +30,9 @@
     font-family: Arial, Helvetica, sans-serif;
     background: linear-gradient(
         to bottom,
-        var(--color-secundary-dark) 0%,
+        var(--color-secondary-dark) 0%,
         var(--color-secundario) 50%,
-        var(--color-secundary-dark) 100%
+        var(--color-secondary-dark) 100%
     );
     padding: 12px 40px;
     border-radius: 6px;

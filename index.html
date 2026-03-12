@@ -41,10 +41,7 @@
         
         <!-- Panel 4: Tercios Inferiores -->
         <div id="panel-tercios" class="panel">
-            <!-- Contenido por implementar -->
-            <div class="tercios-placeholder">
-                <p>Panel Tercios (Por Implementar)</p>
-            </div>
+            <!-- Contenido generado por panel-tercios.js -->
         </div>
         
     </div>
@@ -86,6 +83,7 @@
         import PanelLogos from './modules/panel-logos.js';
         import PanelMarcador from './modules/panel-marcador.js';
         import PanelPenales from './modules/panel-penales.js';
+        import PanelTercios from './modules/panel-tercios.js';
 
 
         // Referencias DOM
@@ -140,6 +138,10 @@
         console.log('🥅 Inicializando PanelPenales...');
             const panelPenales = new PanelPenales(configManager, db);
             panelPenales.initialize();
+        
+        console.log('📢 Inicializando PanelTercios...');
+        const panelTercios = new PanelTercios(db);
+        panelTercios.initialize();
 
 
         // ===== DEBUG PANEL =====
@@ -170,7 +172,8 @@
             panelController,
             panelLogos,
             panelMarcador,
-            panelPenales
+            panelPenales,
+            panelTercios
         };
      
     </script>

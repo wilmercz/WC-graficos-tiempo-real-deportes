@@ -27,8 +27,7 @@ class PanelController {
         this.panels = {
             logos: document.getElementById('panel-logos'),
             marcador: document.getElementById('panel-marcador'),
-            penales: document.getElementById('panel-penales'),
-            tercios: document.getElementById('panel-tercios')
+            penales: document.getElementById('panel-penales')
         };
 
         // Verificar que existen
