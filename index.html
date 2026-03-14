@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="styles/panel-marcador.css">
     <link rel="stylesheet" href="styles/panel-penales.css">
     <link rel="stylesheet" href="styles/panel-tercios.css">
+    <link rel="stylesheet" href="styles/panel-publicidad.css">
 </head>
 <body>
     <!-- Contenedor Principal del Overlay -->
@@ -42,6 +43,11 @@
         <!-- Panel 4: Tercios Inferiores -->
         <div id="panel-tercios" class="panel">
             <!-- Contenido generado por panel-tercios.js -->
+        </div>
+        
+        <!-- Panel 5: Publicidad (Lowerthirds Ads) -->
+        <div id="panel-publicidad" class="panel">
+            <!-- Se inyecta dinámicamente: img, video o html -->
         </div>
         
     </div>
@@ -75,5 +81,6 @@
 
     <!-- Módulos JavaScript -->
     <script type="module" src="app.js"></script>
+    <script type="module" src="panel-publicidad.js"></script>
 </body>
 </html>
