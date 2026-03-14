@@ -157,25 +157,6 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════
    CORRECCIÓN PANEL PUBLICIDAD (Asegurar visibilidad)
    ═══════════════════════════════════════════════════════════════════════════ */
-#panel-publicidad {
-    /* Sobrescribir el display:none de la clase .panel */
-    display: flex !important;
-    justify-content: center;
-    align-items: flex-end; /* Muestra la publicidad abajo (Lower Thirds) */
-    position: absolute !important;
-    top: auto !important;    /* Ignorar top */
-    bottom: 0 !important;    /* Pegado abajo */
-    left: 0 !important;
-    width: 100% !important;  /* Bug Fix 3: Asegurar ancho completo sobre otros CSS */
-    height: 300px !important; /* Altura fija para que el cuadro fucsia se vea aunque esté vacío */
-    
-
-    z-index: 2000; /* Z-index extremo por si algo lo tapa */
-    transition: none; /* Desactivar animación para la prueba */
-
-    padding-bottom: 0px; /* Margen inferior */
-    /* padding-bottom: 50px; Margen inferior */
-}
 
 #panel-publicidad.mostrar {
     opacity: 1; /* Visible cuando JS agrega esta clase */
