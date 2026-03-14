@@ -1,7 +1,7 @@
 #panel-publicidad {
     position: absolute;
     bottom: 0px; /* Ajuste para margen inferior */
-    height: 200px;
+    height: 150px;
     z-index: 9999; /* Por encima de todo */
     display: flex;
     justify-content: center;
