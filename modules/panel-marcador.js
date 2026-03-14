@@ -73,11 +73,22 @@ class PanelMarcador {
     listenPartido() {
         this.partidoRef.on('value', snap => {
             const data = snap.val();
-            if (!data) return;
+            
+            // DIAGNÓSTICO: Ver si llegan datos y qué goles trae
+            if (!data) {
+                console.warn("⚽ PanelMarcador: Datos vacíos (null) en /PARTIDOACTUAL");
+                return;
+            }
+            
+            console.log(`⚽ MARCADOR UPDATE: ${data.EQUIPO1} (${data.GOLES1}) - (${data.GOLES2}) ${data.EQUIPO2}`);
 
-            this.updateEquipos(data);
-            this.updateGoles(data);
-            this.updateEstadoTiempo(data);
+            try {
+                this.updateEquipos(data);
+                this.updateGoles(data);
+                this.updateEstadoTiempo(data);
+            } catch (error) {
+                console.error("⛔ Error actualizando visuales del Marcador:", error);
+            }
         });
     }
 

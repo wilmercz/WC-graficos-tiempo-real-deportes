@@ -1,15 +1,18 @@
 #panel-publicidad {
     position: absolute;
-    bottom: 50px; /* Ajuste para margen inferior */
-    left: 0;
-    width: 1920px;
+    bottom: 0px; /* Ajuste para margen inferior */
     height: 200px;
     z-index: 9999; /* Por encima de todo */
     display: flex;
     justify-content: center;
     align-items: center;
+
+    left: 0;
+    width: 100%;
+
     pointer-events: none; /* Permite ver/clic a través si es transparente */
     
+    z-index: 9999; /* Por encima de todo */
     /* Animación de entrada/salida */
     transform: translateY(100%);
     opacity: 0;

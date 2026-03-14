@@ -15,6 +15,7 @@ import PanelLogos from './modules/panel-logos.js';
 import PanelMarcador from './modules/panel-marcador.js';
 import PanelPenales from './modules/panel-penales.js';
 import PanelTercios from './modules/panel-tercios.js';
+import PanelPublicidad from './modules/panel-publicidad.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -47,17 +48,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- C. Módulos Específicos ---
     
+    let panelMarcador, panelPenales, panelTercios, panelPublicidad;
+
     // Marcador
-    const panelMarcador = new PanelMarcador(configManager, db);
-    panelMarcador.initialize();
+    try {
+        panelMarcador = new PanelMarcador(configManager, db);
+        panelMarcador.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelMarcador:", error);
+    }
 
     // Penales
-    const panelPenales = new PanelPenales(configManager, db);
-    panelPenales.initialize();
+    try {
+        panelPenales = new PanelPenales(configManager, db);
+        panelPenales.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelPenales:", error);
+    }
 
     // Tercios (Acciones de juego y Sonidos FX)
-    const panelTercios = new PanelTercios(db);
-    panelTercios.initialize();
+    try {
+        panelTercios = new PanelTercios(db);
+        panelTercios.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelTercios:", error);
+    }
+
+    // Publicidad (Lowerthirds Ads)
+    try {
+        console.log("👉 Intentando iniciar PanelPublicidad...");
+        panelPublicidad = new PanelPublicidad(db);
+        panelPublicidad.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelPublicidad:", error);
+    }
 
     // Audio Manager (Música de fondo / Cortinas)
     const audioManager = new AudioManager(db);
@@ -71,7 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
         panelLogos,
         panelMarcador,
         panelPenales,
-        panelTercios
+        panelTercios,
+        panelPublicidad
     };
 
     console.log('✅ Todo inicializado correctamente.');
