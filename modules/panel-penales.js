@@ -59,6 +59,23 @@ class PanelPenales {
       const data = snap.val();
       if (!data) return;
 
+      // VALIDACIÓN DE VISIBILIDAD (PENALES)
+      const deporte = (data.DEPORTE || 'FUTBOL').toUpperCase();
+      const mostrarPenales = data.MARCADOR_PENALES === true || data.MARCADOR_PENALES === 'true';
+
+      if (deporte === 'FUTBOL' && mostrarPenales) {
+        // Corrección de animación:
+        // Si tiene display: none (por inicialización), lo quitamos y forzamos un 'reflow'
+        if (this.container.style.display === 'none') {
+            this.container.style.display = '';
+            void this.container.offsetWidth; // 👈 Truco clave: obliga al navegador a pintar el estado inicial antes de animar
+        }
+        this.container.classList.add('visible');
+      } else {
+        this.container.classList.remove('visible');
+        return; // Detenemos actualización si está oculto
+      }
+
       // Equipos
       document.getElementById('penales-equipo-1').textContent = (data.EQUIPO1 || 'EQUIPO 1').toUpperCase();
       document.getElementById('penales-equipo-2').textContent = (data.EQUIPO2 || 'EQUIPO 2').toUpperCase();

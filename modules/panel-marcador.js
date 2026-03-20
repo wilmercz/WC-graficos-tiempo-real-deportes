@@ -82,15 +82,18 @@ class PanelMarcador {
             
             console.log(`⚽ MARCADOR UPDATE: ${data.EQUIPO1} (${data.GOLES1}) - (${data.GOLES2}) ${data.EQUIPO2}`);
 
-            // VALIDACIÓN DE DEPORTE
-            // Si el campo DEPORTE existe y es 'BASQUET' (u otro futuro), ocultamos este panel de fútbol.
+            // VALIDACIÓN DE VISIBILIDAD (FUTBOL)
             const deporte = (data.DEPORTE || 'FUTBOL').toUpperCase();
-            if (deporte !== 'FUTBOL') {
+            const mostrarMarcador = data.MARCADOR_FUTBOL === true || data.MARCADOR_FUTBOL === 'true';
+            const mostrarPenales = data.MARCADOR_PENALES === true || data.MARCADOR_PENALES === 'true';
+
+            // REGLA: Mostrar solo si es FUTBOL + Flag activada + NO hay penales activos (Penales tiene prioridad)
+            if (deporte === 'FUTBOL' && mostrarMarcador && !mostrarPenales) {
+                this.container.style.display = 'block';
+            } else {
                 this.container.style.display = 'none';
                 this.stopTimer();
                 return; 
-            } else {
-                this.container.style.display = 'block';
             }
 
             try {

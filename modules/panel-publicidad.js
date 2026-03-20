@@ -47,17 +47,6 @@ class PanelPublicidad {
      */
     procesarDatos(data) {
         console.log("⚙️ procesarDatos ejecutándose...");
-
-        // DEBUG: Verificar campos específicos si es un objeto único
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            console.log(`🔍 Inspección de campos recibidos:
-                - tipo: "${data.tipo}"
-                - contenido: "${data.contenido}"
-                - duracion: ${data.duracion}
-                - mostrar: ${data.mostrar}
-            `);
-        }
-
         // 1. Detener cualquier secuencia actual y limpiar
         this.detenerSecuencia();
 
@@ -88,13 +77,13 @@ class PanelPublicidad {
 
         // 5. Iniciar la secuencia si hay elementos en la cola
         if (this.colaPublicidad.length > 0) {
-            console.log(`▶️ Reproduciendo ${this.colaPublicidad.length} anuncio(s)`);
+            console.log(`▶️ Iniciando secuencia con ${this.colaPublicidad.length} anuncio(s)`);
             this.mostrarSiguiente();
         }
     }
 
     /**
-     * Detiene timers y resetea el estado
+     * Detiene la secuencia actual, limpia timers y oculta el panel.
      */
     detenerSecuencia() {
         if (this.timerDuracion) clearTimeout(this.timerDuracion);
@@ -104,70 +93,109 @@ class PanelPublicidad {
         this.colaPublicidad = [];
         
         this.panel.classList.remove('mostrar');
-        // this.panel.classList.remove('mostrar');
         
+        // Después de la transición de salida, limpiar el contenido.
         setTimeout(() => {
             if (!this.panel.classList.contains('mostrar')) {
                 this.panel.innerHTML = '';
             }
-        }, 800);
+        }, 800); // Coincide con la duración de la transición en CSS
     }
 
     /**
-     * Lógica principal del Playlist (Recursiva)
+     * Toma el siguiente anuncio de la cola y lo renderiza.
      */
     mostrarSiguiente() {
         if (this.colaPublicidad.length === 0) {
             console.log("🏁 Fin de la lista de reproducción.");
+            this.detenerSecuencia();
             return;
         }
 
         const anuncio = this.colaPublicidad.shift();
-        console.log(`👁️ ACTIVANDO ANUNCIO: Tipo=${anuncio.tipo}, Duración=${anuncio.duracion || 10}s, URL=${anuncio.contenido}`);
-
-        // 1. Renderizar contenido
-        this.renderizarContenido(anuncio.tipo, anuncio.contenido);
-
-        // 2. Mostrar panel
-        // Bug Fix 1: Doble requestAnimationFrame para asegurar que el navegador
-        // pinte el estado inicial antes de activar la transición de opacidad.
-        this.panel.classList.add('mostrar');
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                // PRUEBA TEMPORAL: El panel ya es visible por CSS, no es necesario añadir la clase.
-                // this.panel.classList.add('mostrar');
-            });
-        });
-
-        const tiempo = (anuncio.duracion ? anuncio.duracion * 1000 : 20000);
-
-        // 4. Programar la salida
-        this.timerDuracion = setTimeout(() => {
-            // PRUEBA TEMPORAL: No ocultar el panel desde JS
-            // this.panel.classList.remove('mostrar');
-
-            this.timerTransicion = setTimeout(() => {
-                 this.panel.innerHTML = ''; 
-                this.mostrarSiguiente();   
-            }, 800);
-        }, tiempo);
+        console.log(`👁️ PREPARANDO ANUNCIO: Tipo=${anuncio.tipo}, URL=${anuncio.contenido}`);
+        this.renderizarContenido(anuncio);
     }
 
-    renderizarContenido(tipo, contenido) {
-        this.panel.innerHTML = ''; 
+    /**
+     * Oculta el panel y llama a `mostrarSiguiente` para continuar la cola.
+     */
+    ocultarYContinuar() {
+        this.panel.classList.remove('mostrar');
+
+        if (this.timerDuracion) clearTimeout(this.timerDuracion);
+        if (this.timerTransicion) clearTimeout(this.timerTransicion);
+
+        // Esperar a que termine la animación de salida para continuar.
+        this.timerTransicion = setTimeout(() => {
+            this.panel.innerHTML = '';
+            this.mostrarSiguiente();
+        }, 800);
+    }
+
+    /**
+     * Crea el elemento (imagen/video), espera a que cargue, y luego lo muestra.
+     * @param {object} anuncio El objeto del anuncio con `tipo` y `contenido`.
+     */
+    renderizarContenido(anuncio) {
+        this.panel.innerHTML = '';
+        const { tipo, contenido } = anuncio;
+
+        const mostrarPanelYProgramarSalida = (duracionMs) => {
+            this.panel.classList.add('mostrar');
+            this.timerDuracion = setTimeout(() => {
+                this.ocultarYContinuar();
+            }, duracionMs);
+        };
+
         if (tipo === 'imagen') {
             const img = document.createElement('img');
-            img.src = contenido;
+            img.onload = () => {
+                console.log(`🖼️ Imagen cargada: ${contenido}. Mostrando por 25 segundos.`);
+                // Duración fija de 25 segundos para imágenes.
+                mostrarPanelYProgramarSalida(25000);
+            };
+            img.onerror = () => {
+                console.error(`❌ Error al cargar imagen: ${contenido}. Saltando al siguiente.`);
+                this.mostrarSiguiente(); // Continuar con el siguiente anuncio.
+            };
             this.panel.appendChild(img);
+            img.src = contenido;
         } else if (tipo === 'video') {
             const video = document.createElement('video');
-            video.src = contenido;
             video.autoplay = true;
             video.muted = true;
             video.loop = false;
+
+            video.onloadedmetadata = () => {
+                const duracionVideo = video.duration;
+                console.log(`📹 Metadatos de video cargados. Duración: ${duracionVideo}s`);
+                // Usar la duración del video. Fallback a 25s si no es válida (ej. stream).
+                const duracionMs = (duracionVideo && isFinite(duracionVideo))
+                    ? duracionVideo * 1000
+                    : 25000;
+                video.dataset.duracionMs = duracionMs;
+            };
+
+            video.oncanplay = () => {
+                const duracionMs = parseInt(video.dataset.duracionMs, 10) || 25000;
+                console.log(`▶️ Video listo para reproducir. Mostrando por ${duracionMs / 1000} segundos.`);
+                mostrarPanelYProgramarSalida(duracionMs);
+                video.play().catch(e => console.warn("Autoplay de video bloqueado por el navegador.", e));
+            };
+
+            video.onerror = () => {
+                console.error(`❌ Error al cargar video: ${contenido}. Saltando al siguiente.`);
+                this.mostrarSiguiente();
+            };
+
             this.panel.appendChild(video);
+            video.src = contenido;
+            video.load(); // Iniciar la carga del video.
+        } else {
+            console.warn(`Tipo de contenido no soportado: "${tipo}". Saltando.`);
+            setTimeout(() => this.mostrarSiguiente(), 50);
         }
-        // HTML omitido por brevedad, agregar si es necesario
     }
 }
 

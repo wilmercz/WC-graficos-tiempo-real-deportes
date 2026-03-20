@@ -166,5 +166,4 @@ body {
     max-width: 90vw;  /* Evitar que se salga del ancho */
     max-height: 80vh; /* Evitar que se salga del alto */
     object-fit: contain;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
 }

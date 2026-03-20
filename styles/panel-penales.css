@@ -4,9 +4,27 @@
 
 #panel-penales {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  display: none;
+  bottom: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  z-index: 150;
+
+  /* Animación */
+  display: block; /* Se controla con opacidad/visibilidad */
+  opacity: 0;
+  visibility: hidden;
+  /* Estado Oculto: Desplazado hacia arriba (-50px) para caer al entrar */
+  transform: translateX(-50%) translateY(-50px);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Estado Visible */
+#panel-penales.visible {
+  opacity: 1;
+  visibility: visible;
+  /* Estado Final: En su sitio (bottom: 8vh) */
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Contenedor */
@@ -21,7 +39,7 @@
 /* Fila */
 .penales-row {
   display: flex;
-  align-items: center;
+  align-items: stretch; /* Para que todos los bloques tengan el mismo alto */
 }
 
 /* Nombre equipo */
@@ -32,15 +50,19 @@
   font-weight: bold;
   text-transform: uppercase;
   
-  color: var(--color-texto-secundario);
-      background: linear-gradient(
+  color: var(--color-texto-primario);
+  background: linear-gradient(
         to bottom,
-        var(--color-secundary-dark) 0%,
-        var(--color-secundario) 50%,
-        var(--color-secundary-dark) 100%
+        var(--color-primary-dark) 0%,
+        var(--color-primario) 50%,
+        var(--color-primary-dark) 100%
     );
 
     position: relative;
+    display: flex;
+    justify-content: center; /* Centrado horizontal */
+    align-items: center;     /* Centrado vertical */
+    text-align: center;
 }
 
 
@@ -71,11 +93,22 @@
 .penales-score {
   width: 56px;
   padding: 2px 2px;
-  text-align: center;
   font-size: 30px;
   font-weight: bold;
-  background: var(--color-terciario);
+  
+  /* Branding igual al marcador */
+  background: linear-gradient(
+        to bottom,
+        var(--color-secondary-dark) 0%,
+        var(--color-secundario) 50%,
+        var(--color-secondary-dark) 100%
+    );
   color: var(--color-texto-secundario);
+
+  /* Centrado vertical del número */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Zona círculos */
