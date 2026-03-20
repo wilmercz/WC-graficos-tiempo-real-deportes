@@ -60,10 +60,9 @@ class PanelPenales {
       if (!data) return;
 
       // VALIDACIÓN DE VISIBILIDAD (PENALES)
-      const deporte = (data.DEPORTE || 'FUTBOL').toUpperCase();
       const mostrarPenales = data.MARCADOR_PENALES === true || data.MARCADOR_PENALES === 'true';
 
-      if (deporte === 'FUTBOL' && mostrarPenales) {
+      if (mostrarPenales) {
         // Corrección de animación:
         // Si tiene display: none (por inicialización), lo quitamos y forzamos un 'reflow'
         if (this.container.style.display === 'none') {

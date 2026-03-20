@@ -60,7 +60,7 @@
 
 /* Estilo base para ambas líneas de texto */
 .tercio-linea {
-    font-size: 28px;
+    font-size: 20px;
     font-weight: bold;
     color: #ffffff;
     text-align: left;
@@ -73,7 +73,7 @@
 
 /* Estilo específico para la segunda línea */
 #tercio-linea2 {
-    font-size: 24px; /* Un poco más pequeña */
+    font-size: 16px; /* Un poco más pequeña */
     font-weight: normal; /* Menos énfasis */
     text-transform: none; /* Capitalización normal */
     letter-spacing: 0.5px;

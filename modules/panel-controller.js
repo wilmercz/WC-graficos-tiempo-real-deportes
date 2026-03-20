@@ -26,8 +26,10 @@ class PanelController {
         // Obtener referencias a los paneles del DOM
         this.panels = {
             logos: document.getElementById('panel-logos'),
-            marcador: document.getElementById('panel-marcador'),
-            penales: document.getElementById('panel-penales')
+            // 🛑 COMENTADO PARA EVITAR CONFLICTO:
+            // Estos paneles ahora se gestionan autónomamente con sus propias banderas (MARCADOR_FUTBOL, etc.)
+            // marcador: document.getElementById('panel-marcador'),
+            // penales: document.getElementById('panel-penales')
         };
 
         // Verificar que existen

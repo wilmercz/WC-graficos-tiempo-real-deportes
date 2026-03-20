@@ -48,7 +48,7 @@
 /* --- PUNTOS (Scores) --- */
 .bq-score {
     min-width: 50px;
-    font-size: 32px;
+    font-size: 34px;
     color: var(--color-texto-secundario); /* Gris/Plata */
     background: linear-gradient(
         to bottom,
@@ -64,10 +64,11 @@
 .bq-center {
     background-color: #000000; /* Fondo Negro puro */
     display: flex;
-    flex-direction: column; /* Apilados o en línea según prefieras, el prompt dice "junto Q1 va el cronometro" */
+    flex-direction: row; /* Q1 a la izquierda, Reloj a la derecha */
+    gap: 8px; /* Separación entre el periodo y el reloj */
     justify-content: center;
     align-items: center;
-    min-width: 110px;
+    min-width: 140px; /* Un poco más ancho para que quepan juntos */
     padding: 2px 15px;
     border-left: 2px solid var(--color-primario);
     border-right: 2px solid var(--color-primario);
@@ -75,15 +76,17 @@
 
 /* Periodo (Q1, Q2...) */
 .bq-periodo {
-    font-size: 18px;
-    color: var(--color-primario); /* NARANJA (Branding) */
+    font-size: 20px; /* Un poco más grande para equilibrar */
+    color: #ff9300; /*var(--color-secundario); /* NARANJA (Branding) */
     line-height: 1;
-    margin-bottom: 2px;
+    margin-bottom: 0;
+    font-weight: normal;
 }
 
 /* Cronómetro (10:00) */
 .bq-timer {
-    font-size: 26px;
+    font-size: 30px;
+    font-weight: bold; /* Reloj en negrita solicitado */
     color: #FFFFFF;
     font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada para números */
     letter-spacing: 1px;

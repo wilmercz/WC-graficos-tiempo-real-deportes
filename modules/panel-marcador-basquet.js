@@ -65,11 +65,10 @@ class PanelMarcadorBasquet {
             const data = snap.val();
             if (!data) return;
 
-            // 1. VERIFICAR SI ESTE PANEL DEBE MOSTRARSE
-            // Solo si DEPORTE == 'BASQUET'
-            const deporte = (data.DEPORTE || 'FUTBOL').toUpperCase();
+            // 1. VERIFICAR VISIBILIDAD SEGÚN LA BANDERA 'MARCADOR_BASQUET'
+            const mostrarBasquet = data.MARCADOR_BASQUET === true || data.MARCADOR_BASQUET === 'true';
             
-            if (deporte === 'BASQUET') {
+            if (mostrarBasquet) {
                 this.container.style.display = 'block';
                 this.updateVisuals(data);
             } else {
@@ -96,22 +95,25 @@ class PanelMarcadorBasquet {
         const periodoEl = document.getElementById('bq-periodo');
         const nTiempo = data.NumeroDeTiempo; // 1T, 2T...
         
-        // Mapeo según tu solicitud
+        // Mapeo corregido: 0T=Previa, Impares=Juego, Pares=Descanso
         const mapPeriodos = {
-            '1T': 'JP',  // Por jugarse
-            '2T': 'Q1',
-            '3T': 'B1',  // Break 1
-            '4T': 'Q2',
-            '5T': 'MT',  // Medio Tiempo
-            '6T': 'Q3',
-            '7T': 'B2',
-            '8T': 'Q4',
+            '0T': 'JP',
+            '1T': 'Q1',
+            '2T': 'Fin 1',
+            '3T': 'Q2',
+            '4T': 'MT',
+            '5T': 'Q3',
+            '6T': 'Fin 3',
+            '7T': 'Q4',
+            '8T': 'Fin Reg',
             '9T': 'OT1',
-            '10T': 'OT2',
-            '11T': 'FT'  // Final
+            '10T': 'Fin OT1',
+            '11T': 'OT2',
+            '12T': 'Fin OT2',
+            '13T': 'OT3'
         };
 
-        const textoPeriodo = mapPeriodos[nTiempo] || 'Q1';
+        const textoPeriodo = mapPeriodos[nTiempo] || nTiempo || 'JP';
         periodoEl.textContent = textoPeriodo;
 
         // Lógica de Cronómetro (Cuenta Regresiva)
@@ -121,51 +123,74 @@ class PanelMarcadorBasquet {
     manageTimer(data) {
         const timerEl = document.getElementById('bq-timer');
         
-        // Si no se está cronometrando o es un estado de pausa (JP, B1, MT, B2, FT)
-        // Mostramos el tiempo fijo o 00:00
+        // 1. LEER DATOS
         const cronometrando = data.CRONOMETRANDO === true || data.CRONOMETRANDO === 'true';
         const tiempoJuegoMin = Number(data.TIEMPOJUEGO) || 10;
         
-        // Estados donde el reloj NO corre (Descansos)
-        const estadosPausa = ['JP', 'B1', 'MT', 'B2', 'FT'];
-        const periodoActual = document.getElementById('bq-periodo').textContent;
+        // 2. DEFINIR SI ESTAMOS EN TIEMPO DE JUEGO O PAUSA
+        // Extraemos el número del tiempo (ej: "1T" -> 1)
+        const nTiempoStr = data.NumeroDeTiempo || '0T';
+        const nTiempoVal = parseInt(nTiempoStr); // Devuelve NaN si no hay numero, o el numero
+        
+        let esTiempoDeJuego = false;
+        if (!isNaN(nTiempoVal)) {
+            // Lógica: Impares (1,3,5...) son JUEGO. Pares (0,2,4...) son PAUSA.
+            esTiempoDeJuego = (nTiempoVal % 2 !== 0);
+        }
 
-        if (!cronometrando || estadosPausa.includes(periodoActual)) {
+        // Invertimos para obtener flag de pausa
+        const esEstadoPausa = !esTiempoDeJuego;
+
+        // 3. LÓGICA DE DETENCIÓN (Pausa o Periodo de descanso)
+        if (!cronometrando || esEstadoPausa) {
             this.stopTimer();
             
-            // Si estamos en "Por Jugarse" mostramos el tiempo full (ej: 10:00)
-            // Si estamos en descansos, podríamos mostrar 00:00 o el tiempo de descanso si existiera campo
-            if (periodoActual === 'JP') {
+            // Diagnóstico en consola (F12)
+            if (cronometrando && esEstadoPausa) {
+                console.log(`🏀 Timer detenido: El tiempo actual (${nTiempoStr}) se considera de DESCANSO/PAUSA. El reloj corre en tiempos impares (1T, 3T, etc).`);
+            }
+
+            // Visualización
+            if (nTiempoStr === '0T' || nTiempoStr === 'JP') {
+                // En JP (0T) mostramos el tiempo completo de juego inicial
                 timerEl.textContent = `${String(tiempoJuegoMin).padStart(2,'0')}:00`;
-            } 
-            // Si el cronómetro se detuvo manualmente durante el juego, necesitamos saber cuánto quedaba.
-            // POR AHORA: Si se para, mostraremos "PAUSA" o el último cálculo si lo hiciéramos local,
-            // pero como es stateless, calculamos lo que debería haber si FECHA_PLAY es el inicio.
-            // NOTA: Para Basket real, idealmente Firebase debería enviar "TIEMPO_RESTANTE" cuando está parado.
-            // Asumiremos que si está parado, mostramos 00:00 o lo que venga calculado si implementamos lógica de pausa compleja.
+                timerEl.classList.remove('tiempo-rojo');
+            }
             return;
         }
 
-        // INICIAR CUENTA REGRESIVA
-        // Meta: FECHA_PLAY + TIEMPOJUEGO
-        const fechaPlay = data.FECHA_PLAY; // Timestamp de inicio del cuarto
-        if (!fechaPlay) return;
+        // 4. INICIAR CUENTA REGRESIVA
+        const fechaPlay = data.FECHA_PLAY;
+        
+        if (!fechaPlay) {
+            console.warn("🏀 Error: CRONOMETRANDO=true, pero falta FECHA_PLAY.");
+            return;
+        }
 
+        // Parsear fecha
         const startMs = typeof fechaPlay === 'number' ? fechaPlay : new Date(fechaPlay).getTime();
+        
+        if (isNaN(startMs)) {
+            console.error("🏀 Error: FECHA_PLAY inválida:", fechaPlay);
+            return;
+        }
+
+        // Cálculo de Meta: Inicio + (Minutos * 60 * 1000)
         const duracionMs = tiempoJuegoMin * 60 * 1000;
         const endMs = startMs + duracionMs;
 
-        // Evitar múltiples intervalos
+        // Reiniciar intervalo
         if (this.timerInterval) clearInterval(this.timerInterval);
 
         this.timerInterval = setInterval(() => {
             const now = Date.now() + this.serverTimeOffset;
             const diff = endMs - now;
 
-            if (diff <= 0) {
-                // Se acabó el tiempo
+            if (diff <= 0) { 
+                // TIEMPO AGOTADO
                 timerEl.textContent = "00:00";
                 timerEl.classList.add('tiempo-rojo');
+                // console.log("🏀 Tiempo expirado (FECHA_PLAY + TIEMPOJUEGO < AHORA)");
                 this.stopTimer();
                 return;
             }
