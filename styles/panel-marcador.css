@@ -6,7 +6,10 @@
     position: absolute;   /* ✅ faltaba */
     top: 20px;
     left: 20px;
+    /*transform: translateX(-50%); /* Centrado matemático exacto */
     display: none;
+    z-index: 140; /* Asegurar que se vea sobre fondos */
+    white-space: nowrap; /* 🛑 Regla de oro: Prohibido romper líneas en todo el panel */
 }
 
 /* Wrapper */
@@ -49,6 +52,7 @@
     font-weight: bold;
     min-width: 160px;
     text-align: center;
+    white-space: nowrap; /* 🛑 Asegura que el nombre del equipo nunca baje de línea */
 
     background: linear-gradient(
         to bottom,

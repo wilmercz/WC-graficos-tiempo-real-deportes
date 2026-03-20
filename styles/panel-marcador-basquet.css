@@ -9,6 +9,7 @@
     transform: translateX(-50%) skewX(-15deg); /* Centrado exacto + Inclinación estética */
     display: none; /* Oculto por defecto */
     z-index: 150;
+    white-space: nowrap; /* 🛑 Regla de oro: Prohibido romper líneas */
 }
 
 /* Wrapper para quitar la inclinación al contenido */
@@ -41,6 +42,7 @@
         var(--color-primario) 50%,
         var(--color-primary-dark) 100%
     );
+    white-space: nowrap; /* 🛑 Asegura que el nombre nunca baje de línea */
 }
 
 /* --- PUNTOS (Scores) --- */
