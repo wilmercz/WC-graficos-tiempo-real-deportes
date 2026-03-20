@@ -84,8 +84,9 @@ class PanelMarcadorBasquet {
         document.getElementById('bq-equipo-2').textContent = data.EQUIPO2 || 'AWAY';
 
         // Puntos (Usamos GOLES1/2 como genérico para puntos)
-        document.getElementById('bq-score-1').textContent = data.GOLES1 ?? 0;
-        document.getElementById('bq-score-2').textContent = data.GOLES2 ?? 0;
+        // Formato 2 dígitos: 0 -> 00, 5 -> 05, 10 -> 10
+        document.getElementById('bq-score-1').textContent = String(data.GOLES1 ?? 0).padStart(2, '0');
+        document.getElementById('bq-score-2').textContent = String(data.GOLES2 ?? 0).padStart(2, '0');
 
         // Periodo y Cronómetro
         this.updatePeriodoYTimer(data);
