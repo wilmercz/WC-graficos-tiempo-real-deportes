@@ -13,6 +13,7 @@ import ScaleManager from './modules/scale-manager.js';
 import PanelController from './modules/panel-controller.js';
 import PanelLogos from './modules/panel-logos.js';
 import PanelMarcador from './modules/panel-marcador.js';
+import PanelMarcadorBasquet from './modules/panel-marcador-basquet.js';
 import PanelPenales from './modules/panel-penales.js';
 import PanelTercios from './modules/panel-tercios.js';
 import PanelPublicidad from './modules/panel-publicidad.js';
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- C. Módulos Específicos ---
     
-    let panelMarcador, panelPenales, panelTercios, panelPublicidad;
+    let panelMarcador, panelMarcadorBasquet, panelPenales, panelTercios, panelPublicidad;
 
     // Marcador
     try {
@@ -56,6 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         panelMarcador.initialize();
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelMarcador:", error);
+    }
+
+    // Marcador Basquet (Nuevo)
+    try {
+        panelMarcadorBasquet = new PanelMarcadorBasquet(configManager, db);
+        panelMarcadorBasquet.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelMarcadorBasquet:", error);
     }
 
     // Penales

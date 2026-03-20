@@ -1,0 +1,93 @@
+/* ===============================
+   PANEL MARCADOR BÁSQUET
+   =============================== */
+
+#panel-marcador-basquet {
+    position: absolute;
+    bottom: 5vh; /* Pegado al margen inferior pero con aire */
+    left: 50%;   /* Centrado horizontalmente */
+    transform: translateX(-50%) skewX(-15deg); /* Centrado exacto + Inclinación estética */
+    display: none; /* Oculto por defecto */
+    z-index: 150;
+}
+
+/* Wrapper para quitar la inclinación al contenido */
+.basquet-wrapper {
+    display: flex;
+    align-items: stretch;
+    font-family: Arial, Helvetica, sans-serif;
+    transform: skewX(15deg); /* Contrarrestar inclinación */
+    box-shadow: var(--sombra-media);
+}
+
+/* Estilos comunes */
+.bq-bloque {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 15px;
+    font-weight: bold;
+}
+
+/* --- EQUIPOS --- */
+.bq-equipo {
+    min-width: 140px;
+    font-size: 24px;
+    color: var(--color-texto-primario);
+    text-transform: uppercase;
+    background: linear-gradient(
+        to bottom,
+        var(--color-primary-dark) 0%,
+        var(--color-primario) 50%,
+        var(--color-primary-dark) 100%
+    );
+}
+
+/* --- PUNTOS (Scores) --- */
+.bq-score {
+    min-width: 50px;
+    font-size: 32px;
+    color: var(--color-texto-secundario); /* Gris/Plata */
+    background: linear-gradient(
+        to bottom,
+        var(--color-secondary-dark) 0%,
+        var(--color-secundario) 50%,
+        var(--color-secondary-dark) 100%
+    );
+    border-left: 1px solid rgba(255,255,255,0.1);
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+/* --- BLOQUE CENTRAL (Tiempo y Periodo) --- */
+.bq-center {
+    background-color: #000000; /* Fondo Negro puro */
+    display: flex;
+    flex-direction: column; /* Apilados o en línea según prefieras, el prompt dice "junto Q1 va el cronometro" */
+    justify-content: center;
+    align-items: center;
+    min-width: 110px;
+    padding: 2px 15px;
+    border-left: 2px solid var(--color-primario);
+    border-right: 2px solid var(--color-primario);
+}
+
+/* Periodo (Q1, Q2...) */
+.bq-periodo {
+    font-size: 18px;
+    color: var(--color-primario); /* NARANJA (Branding) */
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+/* Cronómetro (10:00) */
+.bq-timer {
+    font-size: 26px;
+    color: #FFFFFF;
+    font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada para números */
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+.bq-timer.tiempo-rojo {
+    color: #FF3333; /* Rojo cuando queda poco tiempo o está detenido */
+}
