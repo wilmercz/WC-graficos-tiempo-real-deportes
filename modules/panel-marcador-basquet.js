@@ -100,17 +100,17 @@ class PanelMarcadorBasquet {
         const mapPeriodos = {
             '0T': 'JP',
             '1T': 'Q1',
-            '2T': 'Fin 1',
+            '2T': 'B1',
             '3T': 'Q2',
             '4T': 'MT',
             '5T': 'Q3',
-            '6T': 'Fin 3',
+            '6T': 'B3',
             '7T': 'Q4',
-            '8T': 'Fin Reg',
+            '8T': 'FP',
             '9T': 'OT1',
-            '10T': 'Fin OT1',
+            '10T': 'B4',
             '11T': 'OT2',
-            '12T': 'Fin OT2',
+            '12T': 'B5',
             '13T': 'OT3'
         };
 
@@ -124,68 +124,93 @@ class PanelMarcadorBasquet {
     manageTimer(data) {
         const timerEl = document.getElementById('bq-timer');
         
-        // 1. LEER DATOS
-        const cronometrando = data.CRONOMETRANDO === true || data.CRONOMETRANDO === 'true';
-        const tiempoJuegoMin = Number(data.TIEMPOJUEGO) || 10;
+        // 1. LEER DATOS DEL MOTOR KOTLIN
+        // FECHA_PLAY: Timestamp de inicio (ms)
+        // CRONO_PAUSA_ACUMULADA: Segundos acumulados en pausa
+        // CRONO_OFFSET: Segundos ajustados manualmente
+        // CRONO_EN_PAUSA: Boolean
         
-        // 2. DEFINIR SI ESTAMOS EN TIEMPO DE JUEGO O PAUSA
-        // Extraemos el número del tiempo (ej: "1T" -> 1)
-        const nTiempoStr = data.NumeroDeTiempo || '0T';
-        const nTiempoVal = parseInt(nTiempoStr); // Devuelve NaN si no hay numero, o el numero
-        
-        let esTiempoDeJuego = false;
-        if (!isNaN(nTiempoVal)) {
-            // Lógica: Impares (1,3,5...) son JUEGO. Pares (0,2,4...) son PAUSA.
-            esTiempoDeJuego = (nTiempoVal % 2 !== 0);
-        }
-
-        // Invertimos para obtener flag de pausa
-        const esEstadoPausa = !esTiempoDeJuego;
-
-        // 3. LÓGICA DE DETENCIÓN (Pausa o Periodo de descanso)
-        if (!cronometrando || esEstadoPausa) {
-            this.stopTimer();
-            
-            // Diagnóstico en consola (F12)
-            if (cronometrando && esEstadoPausa) {
-                console.log(`🏀 Timer detenido: El tiempo actual (${nTiempoStr}) se considera de DESCANSO/PAUSA. El reloj corre en tiempos impares (1T, 3T, etc).`);
-            }
-
-            // Visualización
-            if (nTiempoStr === '0T' || nTiempoStr === 'JP') {
-                // En JP (0T) mostramos el tiempo completo de juego inicial
-                timerEl.textContent = `${String(tiempoJuegoMin).padStart(2,'0')}:00`;
-                timerEl.classList.remove('tiempo-rojo');
-            }
-            return;
-        }
-
-        // 4. INICIAR CUENTA REGRESIVA
         const fechaPlay = data.FECHA_PLAY;
+        const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
+        const tiempoJuegoMin = Number(data.TIEMPOJUEGO) || 10;
+        const inicioPausaVal = data.CRONO_INICIO_PAUSA; // Nuevo campo esperado
         
         if (!fechaPlay) {
-            console.warn("🏀 Error: CRONOMETRANDO=true, pero falta FECHA_PLAY.");
+            // Si no hay fecha de inicio, mostramos el tiempo total y salimos
+            timerEl.textContent = `${String(tiempoJuegoMin).padStart(2,'0')}:00`;
+            timerEl.classList.remove('tiempo-rojo');
+            this.stopTimer();
             return;
         }
 
-        // Parsear fecha
+        // Parsear fecha de inicio
         const startMs = typeof fechaPlay === 'number' ? fechaPlay : new Date(fechaPlay).getTime();
+
+        // Parsear inicio de pausa si existe
+        const inicioPausaMs = typeof inicioPausaVal === 'number' ? inicioPausaVal : (inicioPausaVal ? new Date(inicioPausaVal).getTime() : null);
+        
+        // Obtener pausas y offset en MS (vienen en segundos desde Kotlin)
+        const pausaAcumuladaMs = (Number(data.CRONO_PAUSA_ACUMULADA) || 0) * 1000;
+        const offsetMs = (Number(data.CRONO_OFFSET) || 0) * 1000;
+
+        // Calcular duración total del cuarto en MS
+        const duracionCuartoMs = tiempoJuegoMin * 60 * 1000;
+
+        // Función de cálculo para actualizar visualmente
+        const actualizarVisual = () => {
+            let now = Date.now() + this.serverTimeOffset;
+            
+            if (enPausa && inicioPausaMs) {
+                now = inicioPausaMs;
+            }
+
+            // FÓRMULA: Tiempo Transcurrido Real = (Ahora - Inicio) - Pausas + Offset
+            // (El offset suma tiempo al cronómetro recorrido, lo que en cuenta regresiva RESTA tiempo restante)
+            const tiempoTranscurridoMs = (now - startMs) - pausaAcumuladaMs + offsetMs;
+            
+            // CUENTA REGRESIVA: Meta - Transcurrido
+            const diff = duracionCuartoMs - tiempoTranscurridoMs;
+            
+            return diff;
+        };
+
+        // 2. LÓGICA DE PAUSA
+        if (enPausa) {
+            this.stopTimer();
+            
+            // FIX: Calcular y mostrar el tiempo estático exacto donde se pausó
+            const diff = actualizarVisual();
+            
+            if (diff <= 0) {
+                timerEl.textContent = "00:00";
+            } else {
+                const min = Math.floor(diff / 60000);
+                const sec = Math.floor((diff % 60000) / 1000);
+                timerEl.textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            }
+            
+            timerEl.classList.add('tiempo-rojo');
+            
+            // Si se refresca la página durante una pausa, el tiempo calculado podría variar 
+            // si no tenemos el timestamp de pausa. Pero si solo es pausa momentánea, 
+            // el usuario no verá el reloj moverse.
+            
+            // OPCIONAL: Si quisieras mostrar "--:--" o el último valor conocido.
+            // Por ahora dejamos el cálculo estático (con el 'now' actual se verá correr si recargas, 
+            // pero se congelará si solo pausas).
+            return;
+        }
         
         if (isNaN(startMs)) {
             console.error("🏀 Error: FECHA_PLAY inválida:", fechaPlay);
             return;
         }
 
-        // Cálculo de Meta: Inicio + (Minutos * 60 * 1000)
-        const duracionMs = tiempoJuegoMin * 60 * 1000;
-        const endMs = startMs + duracionMs;
-
         // Reiniciar intervalo
         if (this.timerInterval) clearInterval(this.timerInterval);
 
         this.timerInterval = setInterval(() => {
-            const now = Date.now() + this.serverTimeOffset;
-            const diff = endMs - now;
+            const diff = actualizarVisual();
 
             if (diff <= 0) { 
                 // TIEMPO AGOTADO

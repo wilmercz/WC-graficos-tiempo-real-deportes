@@ -122,16 +122,18 @@ class PanelMarcador {
         const estadoEl = document.getElementById('marcador-estado');
         const numeroDeTiempo = data.NumeroDeTiempo;
 
+        // Validar si está en pausa según el motor nuevo
+        const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
+
         this.stopTimer(); // Detener siempre el timer anterior para evitar duplicados
 
         // Gestionar color del texto. Usamos .style.color para tener máxima prioridad
-        // y evitar problemas de especificidad si el ID #marcador-estado tiene un color en CSS.
-        if (numeroDeTiempo === '1T' || numeroDeTiempo === '3T') {
-            // Color normal (gris claro) para el cronómetro
+        // Si está en pausa, lo ponemos en naranja/rojo, si corre en gris.
+        if (enPausa) {
+             estadoEl.style.color = 'var(--color-primario)'; // Naranja para pausa
+        } else if (numeroDeTiempo === '1T' || numeroDeTiempo === '2T' || numeroDeTiempo === '3T' || numeroDeTiempo === '4T') {
+            // Tiempo corriendo
             estadoEl.style.color = 'var(--color-texto-secundario)';
-        } else {
-            // Color naranja de acento para los demás estados
-            estadoEl.style.color = 'var(--color-primario)';
         }
 
         switch (numeroDeTiempo) {
@@ -140,25 +142,22 @@ class PanelMarcador {
                 break;
             
             case '1T':
-                // Inicia el cronómetro para el primer tiempo, mostrando "1T"
-                this.startTimer(data, '1T');
-                break;
-
-            case '2T':
-                estadoEl.textContent = 'ENTRETIEMPO';
-                break;
-
-            case '3T':
-                // Inicia el cronómetro para el segundo tiempo, mostrando "2T"
-                this.startTimer(data, '2T');
-                break;
-
+            case '2T': 
+            case '3T': // Prorrogas si las hubiera
             case '4T':
-                estadoEl.textContent = 'FINALIZÓ';
+                // Inicia o muestra el cronómetro
+                this.startTimer(data, '1T');
+                // Si está en pausa, el startTimer calculará el tiempo pero no arrancará el intervalo
+                if (enPausa) {
+                    this.stopTimer();
+                    // Forzar una actualización visual estática para que se vea el tiempo donde se quedó
+                    this.updateTimerVisuals(data, data.NumeroDeTiempo); 
+                }
                 break;
 
             case '5T':
-                estadoEl.textContent = 'PENALES';
+            case 'PENALES':
+                estadoEl.textContent = 'DEFINICIÓN PENALES';
                 break;
 
             default:
@@ -171,8 +170,6 @@ class PanelMarcador {
     
     startTimer(data, periodText) {
         this.stopTimer();
-
-        // 1. LEER Y VALIDAR TIEMPOJUEGO
         // Se asume que viene en minutos. Por defecto es 45.
         let tiempoJuegoEnMinutos = Number(data.TIEMPOJUEGO);
 
@@ -181,53 +178,79 @@ class PanelMarcador {
             tiempoJuegoEnMinutos = 45;
         }
 
-        // Si es mayor a 45 (ej. 90), lo limitamos a 45 para un solo tiempo.
-        if (tiempoJuegoEnMinutos > 45) {
-            tiempoJuegoEnMinutos = 45;
-        }
+        // Iniciar intervalo
+        this.intervalTimer = setInterval(() => {
+            this.updateTimerVisuals(data, data.NumeroDeTiempo || '1T', tiempoJuegoEnMinutos);
+        }, 1000);
         
-        const tiempoJuegoLimiteEnSegundos = tiempoJuegoEnMinutos * 60;
+        // Ejecutar inmediatamente una vez para no esperar 1s
+        this.updateTimerVisuals(data, data.NumeroDeTiempo || '1T', tiempoJuegoEnMinutos);
+    }
 
-        // Nombre del tiempo (1T, 2T)
-        const numeroTiempo = periodText || data.NumeroDeTiempo || '1T';
+    /**
+     * Cálculo puro y visualización
+     */
+    updateTimerVisuals(data, numeroTiempo, tiempoJuegoEnMinutos = 45) {
+        const estadoEl = document.getElementById('marcador-estado');
 
         // Parsear la fecha de inicio
         const startMs = parseFechaPlayToMs(data.FECHA_PLAY);
+        
+        // Datos del nuevo motor
+        const pausaAcumuladaMs = (Number(data.CRONO_PAUSA_ACUMULADA) || 0) * 1000;
+        const offsetMs = (Number(data.CRONO_OFFSET) || 0) * 1000;
+        const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
+        const inicioPausaMs = parseFechaPlayToMs(data.CRONO_INICIO_PAUSA);
+
+        // Limite para tiempo extra (ej: 45 o 90)
+        // NOTA: Si es 2T, el tiempoJuego suele ser 90, pero el cronómetro corre lineal desde el inicio del 2T?
+        // Depende de cómo lo maneje el backend. 
+        // Si FECHA_PLAY se resetea en el 2T, tiempoJuego base es 45.
+        // Asumiremos que FECHA_PLAY es el inicio del tiempo actual.
+        
+        const tiempoJuegoLimiteEnSegundos = tiempoJuegoEnMinutos * 60;
+
         if (startMs == null) {
             console.warn('⛔ FECHA_PLAY inválida:', data.FECHA_PLAY);
             document.getElementById('marcador-estado').textContent = `${numeroTiempo} • 00:00`;
             return;
         }
 
-        this.intervalTimer = setInterval(() => {
-            const now = Date.now() + this.serverTimeOffset;
-            const elapsed = Math.max(0, Math.floor((now - startMs) / 1000));
+        let now = Date.now() + this.serverTimeOffset;
+        
+        if (enPausa && inicioPausaMs) {
+            now = inicioPausaMs;
+        }
+
+        // FÓRMULA DE MOTOR: (Ahora - Inicio) - Pausas + Offset
+        const elapsedMs = (now - startMs) - pausaAcumuladaMs + offsetMs;
+        const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
 
             // 2. LÍMITE DE SEGURIDAD (1 HORA)
-            if (elapsed > 3600) {
-                console.warn('⌛ Cronómetro detenido por superar 1 hora.');
+            if (elapsedSeconds > 7200) { // 2 Horas
+                // console.warn('⌛ Cronómetro muy alto.');
                 this.stopTimer();
-                document.getElementById('marcador-estado').textContent = `${numeroTiempo} • ${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
-                return;
             }
 
             let texto;
 
             // 3. LÓGICA DE TIEMPO REGULAR VS TIEMPO EXTRA
-            if (elapsed <= tiempoJuegoLimiteEnSegundos) {
-                const minutos = Math.floor(elapsed / 60);
-                const segundos = elapsed % 60;
+            if (elapsedSeconds <= tiempoJuegoLimiteEnSegundos) {
+                const minutos = Math.floor(elapsedSeconds / 60);
+                const segundos = elapsedSeconds % 60;
                 texto = `${numeroTiempo} • ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
             } else {
+                // Tiempo Extra (ej: 45:00 +2)
+                // Mostramos el tiempo reglamentario clavado
                 const textoBase = `${numeroTiempo} • ${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
-                const segundosDeTiempoExtra = elapsed - tiempoJuegoLimiteEnSegundos;
+                
+                const segundosDeTiempoExtra = elapsedSeconds - tiempoJuegoLimiteEnSegundos;
                 const minutosDeTiempoExtra = Math.ceil(segundosDeTiempoExtra / 60);
 
                 texto = (minutosDeTiempoExtra > 0) ? `${textoBase} +${minutosDeTiempoExtra}` : textoBase;
             }
 
-            document.getElementById('marcador-estado').textContent = texto;
-        }, 1000);
+            estadoEl.textContent = texto;
     }
 
 
