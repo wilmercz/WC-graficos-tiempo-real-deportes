@@ -17,9 +17,10 @@ class PanelTercios {
         this.container = document.getElementById('panel-tercios');
         this.partidoRef = this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL');
 
+        this.lastActionText = null;
         this.lastActionTimestamp = null;
         this.hideTimeout = null;
-        this.displayDuration = 11000; // 11 segundos (8 + 3) para mostrar el tercio
+        this.displayDuration = 8000; // 8 segundos de visibilidad antes de apagar el switch
 
         console.log('📢 PanelTercios: Inicializando...');
     }
@@ -58,19 +59,30 @@ class PanelTercios {
             const data = snapshot.val();
             if (!data) return;
 
+            // 1. Control de visibilidad mediante interruptor booleano
+            const mostrarManual = data.MOSTRAR_TERCIO === true || data.MOSTRAR_TERCIO === 'true';
             const actionText = data.ACCION_JUGADA_MINUTO;
-            const audioUrl = data.ACCION_AUDIO_URL; // Campo propuesto para el audio
-            const actionTimestamp = data.ULTIMA_ACTUALIZACION;
+            const actionTimestamp = data.ACCION_TIMESTAMP || data.ULTIMA_ACTUALIZACION;
+            const audioUrl = data.ACCION_AUDIO_URL;
+            const isVisible = this.container.classList.contains('visible');
 
-            if (!actionText || !actionTimestamp) {
+            // Si el interruptor está apagado, ocultamos inmediatamente
+            if (!mostrarManual) {
+                if (isVisible) this.hideAction();
                 return;
             }
 
-            // Comprobar si es una acción nueva comparando el timestamp
-            if (actionTimestamp !== this.lastActionTimestamp) {
-                console.log(`📢 PanelTercios: Nueva acción detectada - "${actionText}" con audio: ${audioUrl || 'no'}`);
-                this.lastActionTimestamp = actionTimestamp;
-                this.showAction(actionText, audioUrl);
+            // 2. Si el interruptor está encendido, verificamos si hay contenido y si es nuevo o si el panel estaba oculto
+            if (actionText && actionText.trim() !== "") {
+                const isNewAction = actionText !== this.lastActionText || actionTimestamp !== this.lastActionTimestamp;
+                
+                // Si el panel estaba apagado y activamos el switch, o si el texto cambió mientras estaba encendido
+                if (!isVisible || isNewAction) {
+                    console.log(`📢 PanelTercios: Mostrando acción - "${actionText}"`);
+                    this.lastActionText = actionText;
+                    this.lastActionTimestamp = actionTimestamp;
+                    this.showAction(actionText, audioUrl);
+                }
             }
         });
     }
@@ -104,11 +116,16 @@ class PanelTercios {
             }
         }
 
+        // Cancelar cualquier temporizador de ocultado previo
         if (this.hideTimeout) clearTimeout(this.hideTimeout);
 
         this.container.classList.add('visible');
 
-        this.hideTimeout = setTimeout(() => this.hideAction(), this.displayDuration);
+        // Programar el apagado automático en Firebase tras 8 segundos
+        this.hideTimeout = setTimeout(() => {
+            console.log('🕒 PanelTercios: Tiempo agotado, notificando a Firebase...');
+            this.partidoRef.update({ MOSTRAR_TERCIO: false });
+        }, this.displayDuration);
     }
 
     /**
@@ -116,6 +133,15 @@ class PanelTercios {
      */
     hideAction() {
         this.container.classList.remove('visible');
+        if (this.hideTimeout) clearTimeout(this.hideTimeout);
+        
+        // Opcional: Limpiar texto después de que termine la transición de salida (500ms)
+        setTimeout(() => {
+            if (!this.container.classList.contains('visible')) {
+                document.getElementById('tercio-linea1').textContent = '';
+                document.getElementById('tercio-linea2').textContent = '';
+            }
+        }, 600);
     }
 }
 
