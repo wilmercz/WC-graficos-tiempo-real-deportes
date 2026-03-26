@@ -59,7 +59,7 @@ html {
 
 body {
     font-family: 'Arial', 'Helvetica', sans-serif;
-    background: #222222; /* Gris oscuro para pruebas (cambiar a transparent para producción) */
+    background: transparent; /* #222222; /* Gris oscuro para pruebas (cambiar a transparent para producción) */
     color: var(--color-texto-primario);
     overflow: hidden; /* Sin scroll en overlay */
     width: 100vw;

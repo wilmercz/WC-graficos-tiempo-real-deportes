@@ -4,7 +4,7 @@
 
 #panel-logos {
     position: absolute;
-    top: 40px;          /* Altura similar a un marcador de fútbol (aprox 5vh) */
+    top: 30px;          /* Altura similar a un marcador de fútbol (aprox 5vh) */
     right: 50px;        /* Margen derecho para que no esté pegado al borde */
     z-index: 100;
     pointer-events: none;
