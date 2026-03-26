@@ -131,7 +131,7 @@ class PanelMarcador {
         // Si está en pausa, lo ponemos en naranja/rojo, si corre en gris.
         if (enPausa) {
              estadoEl.style.color = 'var(--color-primario)'; // Naranja para pausa
-        } else if (numeroDeTiempo === '1T' || numeroDeTiempo === '2T' || numeroDeTiempo === '3T' || numeroDeTiempo === '4T') {
+        } else if (numeroDeTiempo === '1T' || numeroDeTiempo === '3T') {
             // Tiempo corriendo
             estadoEl.style.color = 'var(--color-texto-secundario)';
         }
@@ -139,21 +139,28 @@ class PanelMarcador {
         switch (numeroDeTiempo) {
             case '0T':
                 estadoEl.textContent = 'POR JUGARSE';
+                this.stopTimer();
                 break;
             
             case '1T':
-            case '2T': 
-            case '3T': // Prorrogas si las hubiera
-            case '4T':
+            case '3T':
                 // Inicia o muestra el cronómetro
-                this.startTimer(data, '1T');
+                this.startTimer(data);
                 
-                // Si está en pausa, el startTimer calculará el tiempo pero no arrancará el intervalo
                 if (enPausa) {
                     this.stopTimer();
-                    // Forzar una actualización visual estática para que se vea el tiempo donde se quedó
                     this.updateTimerVisuals(); 
                 }
+                break;
+
+            case '2T':
+                estadoEl.textContent = 'ENTRETIEMPO';
+                this.stopTimer();
+                break;
+
+            case '4T':
+                estadoEl.textContent = 'FINALIZADO';
+                this.stopTimer();
                 break;
 
             case '5T':
@@ -164,12 +171,13 @@ class PanelMarcador {
             default:
                 // Si el valor no es ninguno de los esperados, mostramos "POR JUGARSE" como estado inicial.
                 estadoEl.textContent = 'POR JUGARSE';
+                this.stopTimer();
                 break;
         }
     }
 
     
-    startTimer(data, periodText) {
+    startTimer(data) {
         if (this.intervalTimer) return; // Si ya está corriendo, no lo reiniciamos
 
         console.log("🕒 Iniciando motor de cronómetro local...");
@@ -221,6 +229,13 @@ class PanelMarcador {
             now = inicioPausaMs;
         }
 
+        // MAPEO DE NOMBRES VISUALES
+        const nombresVisuales = {
+            '1T': '1T',
+            '3T': '2T'
+        };
+        const nombreAMostrar = nombresVisuales[numeroTiempo] || numeroTiempo;
+
         // FÓRMULA DE MOTOR: (Ahora - Inicio) - Pausas + Offset
         const elapsedMs = (now - startMs) - pausaAcumuladaMs + offsetMs;
         const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
@@ -237,11 +252,11 @@ class PanelMarcador {
             if (elapsedSeconds <= tiempoJuegoLimiteEnSegundos) {
                 const minutos = Math.floor(elapsedSeconds / 60);
                 const segundos = elapsedSeconds % 60;
-                texto = `${numeroTiempo} • ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+                texto = `${nombreAMostrar} • ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
             } else {
                 // Tiempo Extra (ej: 45:00 +2)
                 // Mostramos el tiempo reglamentario clavado
-                const textoBase = `${numeroTiempo} • ${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
+                const textoBase = `${nombreAMostrar} • ${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
                 
                 const segundosDeTiempoExtra = elapsedSeconds - tiempoJuegoLimiteEnSegundos;
                 const minutosDeTiempoExtra = Math.ceil(segundosDeTiempoExtra / 60);

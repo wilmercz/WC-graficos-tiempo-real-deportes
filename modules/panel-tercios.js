@@ -116,6 +116,7 @@ class PanelTercios {
         if (audioUrl) {
             try {
                 const audio = new Audio(audioUrl);
+                audio.volume = 0.7; // Ajustar volumen al 70%
                 audio.play().catch(e => {
                     // La reproducción automática puede ser bloqueada por el navegador
                     console.warn(`⚠️ No se pudo reproducir el audio (${audioUrl}):`, e.message);
