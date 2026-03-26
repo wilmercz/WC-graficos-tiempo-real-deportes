@@ -1,139 +1,41 @@
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * PANEL LOGOS CSS - Estilos del Panel de Logos
- * ═══════════════════════════════════════════════════════════════════════════
- */
+/* ===============================
+   PANEL LOGOS - Posicionamiento
+   =============================== */
 
-/* ========== CONTENEDOR PRINCIPAL ========== */
 #panel-logos {
     position: absolute;
-    top: 5vh;
-    right: 3vw;
-    transform: scale(var(--escala));
-    transform-origin: top right;
-    width: calc(30vw * var(--escala));
-    max-width: calc(500px * var(--escala));
+    top: 40px;          /* Altura similar a un marcador de fútbol (aprox 5vh) */
+    right: 50px;        /* Margen derecho para que no esté pegado al borde */
     z-index: 100;
+    pointer-events: none;
+    /* La opacidad se controla desde el JS, pero aquí aseguramos el estado inicial */
 }
 
-/* ========== WRAPPER ========== */
 .logos-wrapper {
-    width: 100%;
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: calc(20px * var(--escala));
-    padding: calc(20px * var(--escala));
-    box-shadow: var(--sombra-fuerte);
-    border: calc(2px * var(--escala)) solid var(--color-primario);
+    justify-content: center;
+    padding: 10px;
+    /* Opcional: puedes añadir un ligero fondo o sombra si los logos se pierden */
+    /* background: rgba(0, 0, 0, 0.2); 
+       border-radius: 8px; */
 }
 
-/* ========== DISPLAY DE LOGO ========== */
 .logo-display {
-    width: 100%;
-    height: calc(150px * var(--escala));
     display: flex;
-    justify-content: center;
     align-items: center;
-    overflow: hidden;
-    position: relative;
+    justify-content: center;
+    min-width: 120px;
+    min-height: 60px;
 }
 
-/* ========== IMAGEN DE LOGO ========== */
 .logo-image {
-    max-width: 100%;
-    max-height: 100%;
+    max-height: 80px;   /* Tamaño máximo del logo para no tapar el juego */
+    width: auto;
     object-fit: contain;
-    display: block;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); /* Ayuda a que resalte sobre el video */
 }
 
-/* ========== EMOJI PLACEHOLDER ========== */
 .logo-emoji {
-    font-size: calc(8rem * var(--escala));
-    line-height: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-shadow: 
-        0 0 calc(20px * var(--escala)) rgba(255, 107, 0, 0.8),
-        0 0 calc(40px * var(--escala)) rgba(255, 107, 0, 0.4);
-}
-
-/* ========== ESTADOS DE TRANSICIÓN ========== */
-.logo-display.logo-enter,
-.logo-display.logo-exit {
-    position: relative;
-}
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 1280px) {
-    #panel-logos {
-        width: calc(35vw * var(--escala));
-    }
-    
-    .logo-display {
-        height: calc(120px * var(--escala));
-    }
-    
-    .logo-emoji {
-        font-size: calc(6rem * var(--escala));
-    }
-}
-
-@media (min-width: 2560px) {
-    #panel-logos {
-        width: calc(25vw * var(--escala));
-    }
-    
-    .logo-display {
-        height: calc(200px * var(--escala));
-    }
-    
-    .logo-emoji {
-        font-size: calc(10rem * var(--escala));
-    }
-}
-
-/* ========== EFECTOS ESPECIALES ========== */
-
-/* Brillo sutil en hover (solo visible si se usa mouse) */
-.logos-wrapper:hover {
-    box-shadow: 
-        var(--sombra-fuerte),
-        0 0 calc(30px * var(--escala)) rgba(255, 107, 0, 0.3);
-}
-
-/* Efecto de carga para imágenes */
-.logo-image {
-    opacity: 0;
-    transition: opacity 300ms ease-in-out;
-}
-
-.logo-image.loaded {
-    opacity: 1;
-}
-
-/* ========== INDICADOR DE ROTACIÓN (Opcional) ========== */
-.rotation-indicator {
-    position: absolute;
-    bottom: calc(-30px * var(--escala));
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: calc(8px * var(--escala));
-}
-
-.rotation-dot {
-    width: calc(8px * var(--escala));
-    height: calc(8px * var(--escala));
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transition: background 300ms ease;
-}
-
-.rotation-dot.active {
-    background: var(--color-primario);
-    box-shadow: 0 0 calc(10px * var(--escala)) var(--color-primario);
+    font-size: 50px;
 }
