@@ -64,9 +64,9 @@ class ConfigManager {
                 textoSecundario: data.COLORES?.TEXTO_SECUNDARIO || '#CCCCCC'
             },
             logos: {
-                activo: data.LOGOS?.ACTIVO !== false,
-                rotacionActiva: data.LOGOS?.ROTACION_ACTIVA !== false,
-                intervaloMs: data.LOGOS?.INTERVALO_MS || 5000,
+                activo: data.LOGOS?.ACTIVO === true || data.LOGOS?.ACTIVO === 'true',
+                rotacionActiva: data.LOGOS?.ROTACION_ACTIVA === true || data.LOGOS?.ROTACION_ACTIVA === 'true',
+                intervaloMs: Number(data.LOGOS?.INTERVALO_MS) || 60000,
                 transicion: data.LOGOS?.TRANSICION || 'fade',
                 urls: data.LOGOS?.URLS || ['', '', '', '', '']
             },
@@ -93,9 +93,9 @@ class ConfigManager {
                 textoSecundario: '#CCCCCC'
             },
             logos: {
-                activo: true,
+                activo: false,
                 rotacionActiva: true,
-                intervaloMs: 5000,
+                intervaloMs: 60000,
                 transicion: 'fade',
                 urls: ['', '', '', '', '']
             },

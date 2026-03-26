@@ -11,8 +11,9 @@
  */
 
 class PanelLogos {
-    constructor(configManager) {
+    constructor(configManager, firebaseDB) {
         this.configManager = configManager;
+        this.db = firebaseDB;
         this.container = null;
         this.currentIndex = 0;
         this.validLogos = [];
@@ -36,14 +37,28 @@ class PanelLogos {
         // Crear estructura interna
         this.createStructure();
 
+        // Inicializar oculto hasta que carguen los logos
+        this.container.style.opacity = '0';
+        this.container.style.transition = 'opacity 0.5s ease-in-out';
+
+        // Escuchar la lista de logos al aire
+        this.db.ref('/ARKI_DEPORTES/LOGOS_AI_AIRE').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // Extraer URLs del objeto { ID_LOGO: { url: "..." } }
+                this.validLogos = Object.values(data)
+                    .map(item => item.url)
+                    .filter(url => url && url.trim() !== '');
+                
+                console.log(`🎨 PanelLogos: ${this.validLogos.length} logos cargados desde Firebase`);
+                this.updateLogos();
+            }
+        });
+
         // Escuchar cambios de configuración
         this.configManager.onUpdate(() => {
             this.updateLogos();
         });
-
-        // Cargar logos iniciales
-        this.updateLogos();
-
         console.log('✅ PanelLogos: Inicializado');
     }
 
@@ -64,22 +79,18 @@ class PanelLogos {
     updateLogos() {
         const config = this.configManager.getConfigLogos();
         
-        if (!config.activo) {
-            console.log('ℹ️ PanelLogos: Panel desactivado en configuración');
+        // El panel solo aparece si está activo Y hay logos cargados
+        const debeMostrarse = config.activo && this.validLogos.length > 0;
+
+        if (!debeMostrarse) {
+            console.log('ℹ️ PanelLogos: Ocultando panel (Inactivo o sin logos cargados)');
+            this.container.style.opacity = '0';
             this.stopRotation();
             return;
         }
 
-        // Filtrar logos válidos (URLs no vacías)
-        this.validLogos = config.urls.filter(url => url && url.trim() !== '');
-
-        console.log(`🎨 PanelLogos: ${this.validLogos.length} logos válidos encontrados`);
-
-        if (this.validLogos.length === 0) {
-            console.log('⚠️ PanelLogos: No hay logos para mostrar, usando emojis de ejemplo');
-            this.showPlaceholder();
-            return;
-        }
+        // Mostrar panel
+        this.container.style.opacity = '1';
 
         // Mostrar primer logo
         this.currentIndex = 0;
@@ -111,25 +122,6 @@ class PanelLogos {
         }
 
         console.log(`🎨 PanelLogos: Mostrando logo ${index + 1}/${this.validLogos.length}`);
-    }
-
-    /**
-     * Mostrar placeholder cuando no hay logos
-     */
-    showPlaceholder() {
-        const logoDisplay = document.getElementById('logo-display');
-        if (!logoDisplay) return;
-
-        // Usar emojis como placeholder
-        const placeholders = ['⚽', '🏆', '🎯', '⭐', '🔥'];
-        this.validLogos = placeholders;
-        this.currentIndex = 0;
-        
-        logoDisplay.innerHTML = `<div class="logo-emoji">${placeholders[0]}</div>`;
-
-        // Iniciar rotación de emojis
-        const config = this.configManager.getConfigLogos();
-        this.startRotation(config.intervaloMs, config.transicion);
     }
 
     /**
