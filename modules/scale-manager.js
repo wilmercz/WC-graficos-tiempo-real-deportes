@@ -24,11 +24,6 @@ class ScaleManager {
         // Aplicar escala inicial
         this.updateScale();
 
-        // Escuchar cambios de configuración
-        this.configManager.onUpdate(() => {
-            this.updateScale();
-        });
-
         console.log('✅ ScaleManager: Inicializado');
     }
 

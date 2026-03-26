@@ -25,11 +25,8 @@ class PanelController {
     initialize() {
         // Obtener referencias a los paneles del DOM
         this.panels = {
-            logos: document.getElementById('panel-logos'),
-            // 🛑 COMENTADO PARA EVITAR CONFLICTO:
-            // Estos paneles ahora se gestionan autónomamente con sus propias banderas (MARCADOR_FUTBOL, etc.)
-            // marcador: document.getElementById('panel-marcador'),
-            // penales: document.getElementById('panel-penales')
+            // Todos los paneles actuales (Logos, Marcador, Penales, Publicidad) 
+            // son ahora autónomos y se gestionan por sus propias banderas en Firebase.
         };
 
         // Verificar que existen
@@ -44,6 +41,12 @@ class PanelController {
 
         // Escuchar cambios de PANEL_ACTIVO
         this.configManager.onUpdate((config) => {
+            // Si el panel es uno de los autónomos, ignoramos el control central
+            const autonomos = ['logos', 'marcador', 'penales', 'marcador-basquet'];
+            if (autonomos.includes(config.panelActivo)) {
+                console.log(`ℹ️ PanelController: "${config.panelActivo}" es autónomo, ignorando transición.`);
+                return;
+            }
             this.handlePanelChange(config.panelActivo);
         });
 

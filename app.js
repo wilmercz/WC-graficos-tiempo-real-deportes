@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     panelController.initialize();
 
     // Panel de Logos
-    const panelLogos = new PanelLogos(configManager, db);
+    const panelLogos = new PanelLogos(db);
     panelLogos.initialize();
 
     // --- C. Módulos Específicos ---

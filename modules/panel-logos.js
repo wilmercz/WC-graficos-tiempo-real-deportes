@@ -1,70 +1,70 @@
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * PANEL LOGOS - Gestión del Panel de Logos Rotatorios
- * ═══════════════════════════════════════════════════════════════════════════
- * 
- * Responsabilidades:
- * - Mostrar hasta 5 logos
- * - Rotación automática configurable
- * - Transiciones entre logos
- * - Filtrar URLs vacías
- */
-
 class PanelLogos {
-    constructor(configManager, firebaseDB) {
-        this.configManager = configManager;
+    constructor(firebaseDB) {
         this.db = firebaseDB;
         this.container = null;
         this.currentIndex = 0;
         this.validLogos = [];
         this.rotationInterval = null;
         this.isRotating = false;
-        
+        this.partidoPanelLogos = true;
+
+        // Config fija (sin depender de Firebase externo)
+        this.intervaloMs = 60000; // 60 segundos por logo
+        this.transicion = 'fade';
+
         console.log('🎨 PanelLogos: Inicializando...');
     }
 
-    /**
-     * Inicializar panel
-     */
     initialize() {
         this.container = document.getElementById('panel-logos');
-        
+
         if (!this.container) {
-            console.error('❌ PanelLogos: Contenedor #panel-logos no encontrado');
+            console.error('❌ PanelLogos: Contenedor no encontrado');
             return;
         }
 
-        // Crear estructura interna
         this.createStructure();
 
-        // Inicializar oculto hasta que carguen los logos
         this.container.style.opacity = '0';
         this.container.style.transition = 'opacity 0.5s ease-in-out';
 
-        // Escuchar la lista de logos al aire
+        this.db.ref('/').once('value').then(s => {
+    console.log('🔥 ROOT COMPLETO:', s.val());
+});
+
+        // 🔥 ESCUCHAR LOGOS
         this.db.ref('/ARKI_DEPORTES/LOGOS_AI_AIRE').on('value', (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                // Extraer URLs del objeto { ID_LOGO: { url: "..." } }
-                this.validLogos = Object.values(data)
-                    .map(item => item.url)
-                    .filter(url => url && url.trim() !== '');
-                
-                console.log(`🎨 PanelLogos: ${this.validLogos.length} logos cargados desde Firebase`);
-                this.updateLogos();
-            }
-        });
+            console.log('📡 LOGOS RAW:', data);
 
-        // Escuchar cambios de configuración
-        this.configManager.onUpdate(() => {
+            if (!data) {
+                this.validLogos = [];
+                this.updateLogos();
+                return;
+            }
+
+            // ✅ SOLO URLs válidas
+            this.validLogos = Object.values(data)
+                .filter(item => item?.url && typeof item.url === 'string')
+                .map(item => item.url);
+
+            console.log(`🎨 ${this.validLogos.length} logos listos`);
+
             this.updateLogos();
         });
-        console.log('✅ PanelLogos: Inicializado');
+
+        // 🔥 VISIBILIDAD DESDE PARTIDO
+        this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL/PANEL_LOGOS').on('value', (snapshot) => {
+            const val = snapshot.val();
+            this.partidoPanelLogos = (val === null) ? true : (val === true || val === 'true');
+
+            console.log(`👁️ Visibilidad partido: ${this.partidoPanelLogos}`);
+            this.updateLogos();
+        });
+
+        console.log('✅ PanelLogos listo');
     }
 
-    /**
-     * Crear estructura HTML del panel
-     */
     createStructure() {
         this.container.innerHTML = `
             <div class="logos-wrapper">
@@ -73,173 +73,96 @@ class PanelLogos {
         `;
     }
 
-    /**
-     * Actualizar logos desde configuración
-     */
     updateLogos() {
-        const config = this.configManager.getConfigLogos();
-        
-        // El panel solo aparece si está activo Y hay logos cargados
-        const debeMostrarse = config.activo && this.validLogos.length > 0;
+        const hasLogos = this.validLogos.length > 0;
+        const visible = this.partidoPanelLogos;
 
-        if (!debeMostrarse) {
-            console.log('ℹ️ PanelLogos: Ocultando panel (Inactivo o sin logos cargados)');
+        console.log(`🔍 Estado → Logos:${hasLogos} (${this.validLogos.length}) | Partido:${visible}`);
+
+        if (!hasLogos || !visible) {
             this.container.style.opacity = '0';
             this.stopRotation();
+
+            setTimeout(() => {
+                this.container.style.display = 'none';
+            }, 300);
+
             return;
         }
 
-        // Mostrar panel
+        // Mostrar
+        this.container.style.display = 'block';
+        this.container.offsetHeight;
         this.container.style.opacity = '1';
 
-        // Mostrar primer logo
+        // Mostrar primero
         this.currentIndex = 0;
         this.showLogo(this.currentIndex);
 
-        // Iniciar rotación si está activada y hay más de 1 logo
-        if (config.rotacionActiva && this.validLogos.length > 1) {
-            this.startRotation(config.intervaloMs, config.transicion);
+        // Rotación
+        if (this.validLogos.length > 1) {
+            this.startRotation();
         } else {
             this.stopRotation();
         }
     }
 
-    /**
-     * Mostrar un logo específico
-     */
     showLogo(index) {
         const logoDisplay = document.getElementById('logo-display');
         if (!logoDisplay) return;
 
-        const logoUrl = this.validLogos[index];
-        
-        // Verificar si es URL de imagen o emoji placeholder
-        if (this.isImageUrl(logoUrl)) {
-            logoDisplay.innerHTML = `<img src="${logoUrl}" alt="Logo ${index + 1}" class="logo-image">`;
-        } else {
-            // Emoji o texto
-            logoDisplay.innerHTML = `<div class="logo-emoji">${logoUrl}</div>`;
-        }
+        const url = this.validLogos[index];
 
-        console.log(`🎨 PanelLogos: Mostrando logo ${index + 1}/${this.validLogos.length}`);
+        logoDisplay.innerHTML = `
+            <img src="${url}" class="logo-image" />
+        `;
+
+        console.log(`🎨 Mostrando ${index + 1}/${this.validLogos.length}`);
     }
 
-    /**
-     * Iniciar rotación automática
-     */
-    startRotation(intervaloMs, transicion) {
-        this.stopRotation(); // Detener rotación anterior
+    startRotation() {
+        this.stopRotation();
 
-        console.log(`🔄 PanelLogos: Iniciando rotación cada ${intervaloMs}ms (${transicion})`);
-        
+        console.log(`🔄 Rotación cada ${this.intervaloMs}ms`);
+
         this.isRotating = true;
         this.rotationInterval = setInterval(() => {
-            this.nextLogo(transicion);
-        }, intervaloMs);
+            this.nextLogo();
+        }, this.intervaloMs);
     }
 
-    /**
-     * Detener rotación
-     */
     stopRotation() {
         if (this.rotationInterval) {
             clearInterval(this.rotationInterval);
             this.rotationInterval = null;
             this.isRotating = false;
-            console.log('⏸️ PanelLogos: Rotación detenida');
         }
     }
 
-    /**
-     * Ir al siguiente logo
-     */
-    async nextLogo(transicion = 'fade') {
+    async nextLogo() {
         if (this.validLogos.length === 0) return;
 
         const logoDisplay = document.getElementById('logo-display');
         if (!logoDisplay) return;
 
-        // Aplicar animación de salida
-        logoDisplay.classList.add('logo-exit', `logo-exit-${transicion}`);
-        
-        // Esperar animación
+        // salida
+        logoDisplay.classList.add('logo-exit-fade');
         await this.sleep(300);
 
-        // Cambiar al siguiente logo
         this.currentIndex = (this.currentIndex + 1) % this.validLogos.length;
         this.showLogo(this.currentIndex);
 
-        // Aplicar animación de entrada
-        logoDisplay.classList.remove('logo-exit', `logo-exit-${transicion}`);
-        logoDisplay.classList.add('logo-enter', `logo-enter-${transicion}`);
-
-        // Limpiar clases después de la animación
-        await this.sleep(300);
-        logoDisplay.classList.remove('logo-enter', `logo-enter-${transicion}`);
-    }
-
-    /**
-     * Ir al logo anterior
-     */
-    async previousLogo(transicion = 'fade') {
-        if (this.validLogos.length === 0) return;
-
-        const logoDisplay = document.getElementById('logo-display');
-        if (!logoDisplay) return;
-
-        // Aplicar animación de salida
-        logoDisplay.classList.add('logo-exit', `logo-exit-${transicion}`);
-        
-        await this.sleep(300);
-
-        // Cambiar al logo anterior
-        this.currentIndex = (this.currentIndex - 1 + this.validLogos.length) % this.validLogos.length;
-        this.showLogo(this.currentIndex);
-
-        // Aplicar animación de entrada
-        logoDisplay.classList.remove('logo-exit', `logo-exit-${transicion}`);
-        logoDisplay.classList.add('logo-enter', `logo-enter-${transicion}`);
+        // entrada
+        logoDisplay.classList.remove('logo-exit-fade');
+        logoDisplay.classList.add('logo-enter-fade');
 
         await this.sleep(300);
-        logoDisplay.classList.remove('logo-enter', `logo-enter-${transicion}`);
+        logoDisplay.classList.remove('logo-enter-fade');
     }
 
-    /**
-     * Verificar si es URL de imagen
-     */
-    isImageUrl(url) {
-        return url.startsWith('http://') || 
-               url.startsWith('https://') || 
-               url.startsWith('data:image/');
-    }
-
-    /**
-     * Obtener información del estado actual
-     */
-    getStatus() {
-        return {
-            isRotating: this.isRotating,
-            currentIndex: this.currentIndex,
-            totalLogos: this.validLogos.length,
-            currentLogo: this.validLogos[this.currentIndex]
-        };
-    }
-
-    /**
-     * Destruir panel (limpiar recursos)
-     */
-    destroy() {
-        this.stopRotation();
-        console.log('🗑️ PanelLogos: Destruido');
-    }
-
-    /**
-     * Utilidad: Sleep
-     */
     sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(r => setTimeout(r, ms));
     }
 }
 
-// Exportar
 export default PanelLogos;

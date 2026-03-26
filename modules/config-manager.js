@@ -63,13 +63,6 @@ class ConfigManager {
                 textoPrimario: data.COLORES?.TEXTO_PRIMARIO || '#FFFFFF',
                 textoSecundario: data.COLORES?.TEXTO_SECUNDARIO || '#CCCCCC'
             },
-            logos: {
-                activo: data.LOGOS?.ACTIVO === true || data.LOGOS?.ACTIVO === 'true',
-                rotacionActiva: data.LOGOS?.ROTACION_ACTIVA === true || data.LOGOS?.ROTACION_ACTIVA === 'true',
-                intervaloMs: Number(data.LOGOS?.INTERVALO_MS) || 60000,
-                transicion: data.LOGOS?.TRANSICION || 'fade',
-                urls: data.LOGOS?.URLS || ['', '', '', '', '']
-            },
             escalaGlobal: data.ESCALA_GLOBAL || 1.0,
             animaciones: {
                 duracion: data.ANIMACIONES?.DURACION || 500,
@@ -91,13 +84,6 @@ class ConfigManager {
                 terciario: '#000000',
                 textoPrimario: '#FFFFFF',
                 textoSecundario: '#CCCCCC'
-            },
-            logos: {
-                activo: false,
-                rotacionActiva: true,
-                intervaloMs: 60000,
-                transicion: 'fade',
-                urls: ['', '', '', '', '']
             },
             escalaGlobal: 1.0,
             animaciones: {
@@ -155,13 +141,6 @@ class ConfigManager {
      */
     getPanelActivo() {
         return this.config?.panelActivo || 'oculto';
-    }
-
-    /**
-     * API: Obtener configuración de logos
-     */
-    getConfigLogos() {
-        return this.config?.logos || this.getDefaultConfig().logos;
     }
 
     /**

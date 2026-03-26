@@ -25,12 +25,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 120px;
-    min-height: 60px;
+    min-width: 100px;
+    min-height: 50px;
 }
 
 .logo-image {
-    max-height: 80px;   /* Tamaño máximo del logo para no tapar el juego */
+    max-height: 65px;   /* Tamaño reducido (~3 puntos/pasos menos de escala visual) */
     width: auto;
     object-fit: contain;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); /* Ayuda a que resalte sobre el video */
@@ -38,4 +38,27 @@
 
 .logo-emoji {
     font-size: 50px;
+}
+
+/* ===============================
+   ANIMACIONES DE TRANSICIÓN
+   =============================== */
+
+/* Fade */
+.logo-enter-fade {
+    animation: logoFadeIn 0.4s ease-out forwards;
+}
+
+.logo-exit-fade {
+    animation: logoFadeOut 0.3s ease-in forwards;
+}
+
+@keyframes logoFadeIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes logoFadeOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-10px) scale(1.05); }
 }
