@@ -132,13 +132,17 @@ class PanelTercios {
 
         // Programar el apagado automático en Firebase tras 8 segundos
         this.hideTimeout = setTimeout(() => {
-            console.log('🕒 PanelTercios: Tiempo agotado, notificando a Firebase...');
-            this.partidoRef.update({ MOSTRAR_TERCIO: false })
-                .then(() => console.log('✅ MOSTRAR_TERCIO actualizado a false en Firebase'))
+            console.log('🕒 PanelTercios: Tiempo agotado, intentando apagar MOSTRAR_TERCIO en Firebase...');
+            
+            // Intentamos apagar el campo. 
+            this.partidoRef.child('MOSTRAR_TERCIO').set(false)
+                .then(() => {
+                    console.log('✅ Firebase: MOSTRAR_TERCIO desactivado correctamente.');
+                    this.hideAction(); // Ocultamos visualmente tras confirmar éxito
+                })
                 .catch(err => {
-                    console.error('❌ Error al intentar actualizar MOSTRAR_TERCIO. ¿Tienes permisos de escritura?', err);
-                    // Si falla la escritura en Firebase, al menos lo ocultamos localmente
-                    this.hideAction();
+                    console.error('❌ ERROR de Firebase: No se pudo cambiar MOSTRAR_TERCIO a false. Revisa las reglas de escritura (Database Rules).', err);
+                    this.hideAction(); // Ocultamos de todos modos para que no se quede pegado en pantalla
                 });
         }, this.displayDuration);
     }
