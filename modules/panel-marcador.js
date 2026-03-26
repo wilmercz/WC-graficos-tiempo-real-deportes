@@ -14,6 +14,7 @@ class PanelMarcador {
 
         this.serverTimeOffset = 0;
         this.intervalTimer = null;
+        this.currentData = null; // Cache de datos para el motor interno
 
         console.log('⚽ PanelMarcador: Inicializando...');
     }
@@ -80,6 +81,7 @@ class PanelMarcador {
                 return;
             }
             
+            this.currentData = data; // Actualizar cache de datos
             console.log(`⚽ MARCADOR UPDATE: ${data.EQUIPO1} (${data.GOLES1}) - (${data.GOLES2}) ${data.EQUIPO2}`);
 
             // VALIDACIÓN DE VISIBILIDAD (FUTBOL)
@@ -125,8 +127,6 @@ class PanelMarcador {
         // Validar si está en pausa según el motor nuevo
         const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
 
-        this.stopTimer(); // Detener siempre el timer anterior para evitar duplicados
-
         // Gestionar color del texto. Usamos .style.color para tener máxima prioridad
         // Si está en pausa, lo ponemos en naranja/rojo, si corre en gris.
         if (enPausa) {
@@ -147,11 +147,12 @@ class PanelMarcador {
             case '4T':
                 // Inicia o muestra el cronómetro
                 this.startTimer(data, '1T');
+                
                 // Si está en pausa, el startTimer calculará el tiempo pero no arrancará el intervalo
                 if (enPausa) {
                     this.stopTimer();
                     // Forzar una actualización visual estática para que se vea el tiempo donde se quedó
-                    this.updateTimerVisuals(data, data.NumeroDeTiempo); 
+                    this.updateTimerVisuals(); 
                 }
                 break;
 
@@ -169,28 +170,26 @@ class PanelMarcador {
 
     
     startTimer(data, periodText) {
-        this.stopTimer();
-        // Se asume que viene en minutos. Por defecto es 45.
-        let tiempoJuegoEnMinutos = Number(data.TIEMPOJUEGO);
+        if (this.intervalTimer) return; // Si ya está corriendo, no lo reiniciamos
 
-        // Si no es un número válido o está vacío, usar 45.
-        if (isNaN(tiempoJuegoEnMinutos) || tiempoJuegoEnMinutos <= 0) {
-            tiempoJuegoEnMinutos = 45;
-        }
-
-        // Iniciar intervalo
+        console.log("🕒 Iniciando motor de cronómetro local...");
         this.intervalTimer = setInterval(() => {
-            this.updateTimerVisuals(data, data.NumeroDeTiempo || '1T', tiempoJuegoEnMinutos);
+            this.updateTimerVisuals();
         }, 1000);
         
-        // Ejecutar inmediatamente una vez para no esperar 1s
-        this.updateTimerVisuals(data, data.NumeroDeTiempo || '1T', tiempoJuegoEnMinutos);
+        this.updateTimerVisuals();
     }
 
     /**
      * Cálculo puro y visualización
      */
-    updateTimerVisuals(data, numeroTiempo, tiempoJuegoEnMinutos = 45) {
+    updateTimerVisuals() {
+        const data = this.currentData;
+        if (!data) return;
+
+        const numeroTiempo = data.NumeroDeTiempo || '1T';
+        let tiempoJuegoEnMinutos = Number(data.TIEMPOJUEGO) || 45;
+
         const estadoEl = document.getElementById('marcador-estado');
 
         // Parsear la fecha de inicio

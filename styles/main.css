@@ -167,3 +167,11 @@ body {
     max-height: 80vh; /* Evitar que se salga del alto */
     object-fit: contain;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CORRECCIÓN PANEL LOGOS (Quitar sombra)
+   ═══════════════════════════════════════════════════════════════════════════ */
+#panel-logos .logos-wrapper {
+    box-shadow: none !important;
+}
+}

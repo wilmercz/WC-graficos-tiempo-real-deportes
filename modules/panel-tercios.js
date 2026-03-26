@@ -63,13 +63,17 @@ class PanelTercios {
             // 1. Control de visibilidad mediante interruptor booleano
             const mostrarManual = data.MOSTRAR_TERCIO === true || data.MOSTRAR_TERCIO === 'true';
             const actionText = data.ACCION_JUGADA_MINUTO;
-            const actionTimestamp = data.ACCION_TIMESTAMP || data.ULTIMA_ACTUALIZACION;
+            // 🔥 IMPORTANTE: No usar ULTIMA_ACTUALIZACION aquí, porque el reloj del marcador 
+            // lo actualiza cada segundo y reiniciaría el temporizador de 8s infinitamente.
+            const actionTimestamp = data.ACCION_TIMESTAMP; 
             const audioUrl = data.ACCION_AUDIO_URL;
 
             // Detectar si el switch acaba de ser encendido (de false a true)
             const justoActivado = mostrarManual && !this.lastMostrarManual;
-            // Detectar si el contenido es realmente nuevo
-            const contenidoNuevo = (actionText !== this.lastActionText || actionTimestamp !== this.lastActionTimestamp) && (actionText && actionText.trim() !== "");
+            
+            // Detectar si el contenido es realmente nuevo (cambió el texto o el ID de la acción)
+            const contenidoNuevo = (actionText !== this.lastActionText || (actionTimestamp && actionTimestamp !== this.lastActionTimestamp)) 
+                                   && (actionText && actionText.trim() !== "");
 
             // Si el interruptor está apagado, ocultamos inmediatamente
             if (!mostrarManual) {
@@ -129,7 +133,13 @@ class PanelTercios {
         // Programar el apagado automático en Firebase tras 8 segundos
         this.hideTimeout = setTimeout(() => {
             console.log('🕒 PanelTercios: Tiempo agotado, notificando a Firebase...');
-            this.partidoRef.update({ MOSTRAR_TERCIO: false });
+            this.partidoRef.update({ MOSTRAR_TERCIO: false })
+                .then(() => console.log('✅ MOSTRAR_TERCIO actualizado a false en Firebase'))
+                .catch(err => {
+                    console.error('❌ Error al intentar actualizar MOSTRAR_TERCIO. ¿Tienes permisos de escritura?', err);
+                    // Si falla la escritura en Firebase, al menos lo ocultamos localmente
+                    this.hideAction();
+                });
         }, this.displayDuration);
     }
 

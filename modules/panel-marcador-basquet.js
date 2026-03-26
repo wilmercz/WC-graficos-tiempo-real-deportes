@@ -20,6 +20,7 @@ class PanelMarcadorBasquet {
         this.partidoRef = this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL');
         this.serverTimeOffset = 0;
         this.timerInterval = null;
+        this.currentData = null;
         
         console.log('🏀 PanelMarcadorBasquet: Inicializando...');
     }
@@ -65,6 +66,7 @@ class PanelMarcadorBasquet {
             const data = snap.val();
             if (!data) return;
 
+            this.currentData = data;
             // 1. VERIFICAR VISIBILIDAD SEGÚN LA BANDERA 'MARCADOR_BASQUET'
             const mostrarBasquet = data.MARCADOR_BASQUET === true || data.MARCADOR_BASQUET === 'true';
             
@@ -157,29 +159,28 @@ class PanelMarcadorBasquet {
         const duracionCuartoMs = tiempoJuegoMin * 60 * 1000;
 
         // Función de cálculo para actualizar visualmente
-        const actualizarVisual = () => {
+        const ejecutarCalculo = () => {
+            const d = this.currentData;
             let now = Date.now() + this.serverTimeOffset;
             
-            if (enPausa && inicioPausaMs) {
-                now = inicioPausaMs;
+            if (d.CRONO_EN_PAUSA === true || d.CRONO_EN_PAUSA === 'true') {
+                const iPausa = typeof d.CRONO_INICIO_PAUSA === 'number' ? d.CRONO_INICIO_PAUSA : new Date(d.CRONO_INICIO_PAUSA).getTime();
+                if (iPausa) now = iPausa;
             }
 
-            // FÓRMULA: Tiempo Transcurrido Real = (Ahora - Inicio) - Pausas + Offset
-            // (El offset suma tiempo al cronómetro recorrido, lo que en cuenta regresiva RESTA tiempo restante)
-            const tiempoTranscurridoMs = (now - startMs) - pausaAcumuladaMs + offsetMs;
-            
-            // CUENTA REGRESIVA: Meta - Transcurrido
-            const diff = duracionCuartoMs - tiempoTranscurridoMs;
-            
-            return diff;
+            const tStart = typeof d.FECHA_PLAY === 'number' ? d.FECHA_PLAY : new Date(d.FECHA_PLAY).getTime();
+            const pAcum = (Number(d.CRONO_PAUSA_ACUMULADA) || 0) * 1000;
+            const offMs = (Number(d.CRONO_OFFSET) || 0) * 1000;
+            const tJuego = (Number(d.TIEMPOJUEGO) || 10) * 60 * 1000;
+
+            const transcurrido = (now - tStart) - pAcum + offMs;
+            return tJuego - transcurrido;
         };
 
         // 2. LÓGICA DE PAUSA
         if (enPausa) {
             this.stopTimer();
-            
-            // FIX: Calcular y mostrar el tiempo estático exacto donde se pausó
-            const diff = actualizarVisual();
+            const diff = ejecutarCalculo();
             
             if (diff <= 0) {
                 timerEl.textContent = "00:00";
@@ -190,14 +191,6 @@ class PanelMarcadorBasquet {
             }
             
             timerEl.classList.add('tiempo-rojo');
-            
-            // Si se refresca la página durante una pausa, el tiempo calculado podría variar 
-            // si no tenemos el timestamp de pausa. Pero si solo es pausa momentánea, 
-            // el usuario no verá el reloj moverse.
-            
-            // OPCIONAL: Si quisieras mostrar "--:--" o el último valor conocido.
-            // Por ahora dejamos el cálculo estático (con el 'now' actual se verá correr si recargas, 
-            // pero se congelará si solo pausas).
             return;
         }
         
@@ -206,11 +199,10 @@ class PanelMarcadorBasquet {
             return;
         }
 
-        // Reiniciar intervalo
-        if (this.timerInterval) clearInterval(this.timerInterval);
+        if (this.timerInterval) return; // Ya está corriendo
 
         this.timerInterval = setInterval(() => {
-            const diff = actualizarVisual();
+            const diff = ejecutarCalculo();
 
             if (diff <= 0) { 
                 // TIEMPO AGOTADO
