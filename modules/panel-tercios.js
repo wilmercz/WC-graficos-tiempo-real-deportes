@@ -19,6 +19,7 @@ class PanelTercios {
 
         this.lastActionText = null;
         this.lastActionTimestamp = null;
+        this.lastMostrarManual = false; // Rastreador de estado previo
         this.hideTimeout = null;
         this.displayDuration = 8000; // 8 segundos de visibilidad antes de apagar el switch
 
@@ -64,26 +65,30 @@ class PanelTercios {
             const actionText = data.ACCION_JUGADA_MINUTO;
             const actionTimestamp = data.ACCION_TIMESTAMP || data.ULTIMA_ACTUALIZACION;
             const audioUrl = data.ACCION_AUDIO_URL;
-            const isVisible = this.container.classList.contains('visible');
+
+            // Detectar si el switch acaba de ser encendido (de false a true)
+            const justoActivado = mostrarManual && !this.lastMostrarManual;
+            // Detectar si el contenido es realmente nuevo
+            const contenidoNuevo = (actionText !== this.lastActionText || actionTimestamp !== this.lastActionTimestamp) && (actionText && actionText.trim() !== "");
 
             // Si el interruptor está apagado, ocultamos inmediatamente
             if (!mostrarManual) {
-                if (isVisible) this.hideAction();
+                if (this.container.classList.contains('visible')) {
+                    this.hideAction();
+                }
+                this.lastMostrarManual = false;
                 return;
             }
 
-            // 2. Si el interruptor está encendido, verificamos si hay contenido y si es nuevo o si el panel estaba oculto
-            if (actionText && actionText.trim() !== "") {
-                const isNewAction = actionText !== this.lastActionText || actionTimestamp !== this.lastActionTimestamp;
-                
-                // Si el panel estaba apagado y activamos el switch, o si el texto cambió mientras estaba encendido
-                if (!isVisible || isNewAction) {
-                    console.log(`📢 PanelTercios: Mostrando acción - "${actionText}"`);
-                    this.lastActionText = actionText;
-                    this.lastActionTimestamp = actionTimestamp;
-                    this.showAction(actionText, audioUrl);
-                }
+            // 2. Disparar solo si se acaba de activar el switch O si llega contenido nuevo estando activado
+            if (justoActivado || contenidoNuevo) {
+                console.log(`📢 PanelTercios: Ejecutando acción - "${actionText}"`);
+                this.lastActionText = actionText;
+                this.lastActionTimestamp = actionTimestamp;
+                this.showAction(actionText, audioUrl);
             }
+
+            this.lastMostrarManual = mostrarManual;
         });
     }
 
