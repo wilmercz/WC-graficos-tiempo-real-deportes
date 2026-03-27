@@ -15,13 +15,20 @@ class PanelPenales {
   }
 
   initialize() {
+    // Ajuste de posicionamiento y tamaño
+    this.container.style.top = 'auto';           // Desactiva el margen superior
+    this.container.style.bottom = '40px';        // Lo pega más al margen inferior (ajustable)
+    this.container.style.left = '50%';           // Centrado horizontal
+    this.container.style.transform = 'translateX(-50%)'; // Centrado exacto
+
     this.renderBase();
     this.listenPartido();
   }
 
   renderBase() {
     this.container.innerHTML = `
-      <div class="penales-wrapper scaled">
+      <!-- Aumentamos el tamaño multiplicando la escala por 1.2 (aprox 2 puntos más) -->
+      <div class="penales-wrapper scaled" style="transform: scale(calc(var(--escala) * 1.2)); transform-origin: bottom center;">
 
         <div class="penales-row" id="penales-row-1">
           <div class="penales-equipo" id="penales-equipo-1">EQUIPO 1</div>
