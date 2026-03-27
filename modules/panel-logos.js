@@ -67,7 +67,7 @@ class PanelLogos {
 
     createStructure() {
         this.container.innerHTML = `
-            <div class="logos-wrapper">
+            <div class="logos-wrapper scaled">
                 <div class="logo-display" id="logo-display"></div>
             </div>
         `;
@@ -114,7 +114,7 @@ class PanelLogos {
         const url = this.validLogos[index];
 
         logoDisplay.innerHTML = `
-            <img src="${url}" class="logo-image" />
+            <img src="${url}" class="logo-image" style="filter: none !important; box-shadow: none !important;" />
         `;
 
         console.log(`🎨 Mostrando ${index + 1}/${this.validLogos.length}`);
