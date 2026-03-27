@@ -28,17 +28,17 @@ class PanelPenales {
   renderBase() {
     this.container.innerHTML = `
       <!-- Aumentamos el tamaño multiplicando la escala por 1.2 (aprox 2 puntos más) -->
-      <div class="penales-wrapper scaled" style="transform: scale(calc(var(--escala) * 1.2)); transform-origin: bottom center;">
+      <div class="penales-wrapper scaled" style="transform: scale(calc(var(--escala) * 1.2)); transform-origin: bottom center; border-radius: 10px; overflow: hidden; box-shadow: var(--sombra-media);">
 
         <div class="penales-row" id="penales-row-1">
-          <div class="penales-equipo" id="penales-equipo-1">EQUIPO 1</div>
-          <div class="penales-score" id="penales-score-1">0</div>
+          <div class="penales-equipo" id="penales-equipo-1" style="border-radius: 4px; margin: 2px;">EQUIPO 1</div>
+          <div class="penales-score" id="penales-score-1" style="border-radius: 4px; margin: 2px;">0</div>
           <div class="penales-shots" id="penales-shots-1"></div>
         </div>
 
         <div class="penales-row" id="penales-row-2">
-          <div class="penales-equipo" id="penales-equipo-2">EQUIPO 2</div>
-          <div class="penales-score" id="penales-score-2">0</div>
+          <div class="penales-equipo" id="penales-equipo-2" style="border-radius: 4px; margin: 2px;">EQUIPO 2</div>
+          <div class="penales-score" id="penales-score-2" style="border-radius: 4px; margin: 2px;">0</div>
           <div class="penales-shots" id="penales-shots-2"></div>
         </div>
 
