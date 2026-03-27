@@ -17,6 +17,7 @@ import PanelMarcadorBasquet from './modules/panel-marcador-basquet.js';
 import PanelPenales from './modules/panel-penales.js';
 import PanelTercios from './modules/panel-tercios.js';
 import PanelPublicidad from './modules/panel-publicidad.js';
+import PanelPortada from './modules/panel-portada.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -46,6 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Panel de Logos
     const panelLogos = new PanelLogos(db);
     panelLogos.initialize();
+
+    // Panel Portada
+    const panelPortada = new PanelPortada(db);
+    panelPortada.initialize();
 
     // --- C. Módulos Específicos ---
     

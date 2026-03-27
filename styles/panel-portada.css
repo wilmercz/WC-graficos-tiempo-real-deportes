@@ -1,0 +1,110 @@
+/* ===============================
+   PANEL PORTADA (CORTINA)
+   =============================== */
+
+#panel-portada {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000; /* Por encima de todo */
+    display: none;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    background: radial-gradient(circle at center, #2e5bba 0%, #162d5c 100%);
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+}
+
+#panel-portada.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.portada-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px;
+}
+
+/* Logo animado */
+.portada-logo {
+    max-width: 180px; /* Reducido para mayor elegancia */
+    margin-bottom: 60px; /* Más espacio respecto a los equipos */
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+    animation: logoEntrance 1.2s cubic-bezier(0.17, 0.67, 0.83, 0.67), logoPulse 4s infinite ease-in-out 1.2s;
+}
+
+/* Contenedor de encuentro (Diseño para no poner letras al aire) */
+.portada-match-card {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 4px solid #ff8a3d; /* Línea de contraste creativa */
+    padding: 20px 45px; /* Reducido un poco más */
+    border-radius: 15px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    transform: translateY(100px);
+    opacity: 0;
+    animation: cardEntrance 0.8s forwards 0.5s;
+}
+
+.portada-team {
+    font-size: 32px; /* Reducido un poco más para elegancia */
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 2px 4px 10px rgba(0,0,0,0.3);
+}
+
+.portada-vs {
+    font-size: 16px; /* Más pequeño y discreto */
+    background: #ff8a3d; /* Color de contraste solicitado */
+    color: white;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-weight: bold;
+    transform: skewX(-10deg);
+}
+
+.portada-score-wrapper {
+    margin-top: 25px;
+    font-size: 48px; /* Goles mucho más grandes */
+    color: #ffffff;
+    font-weight: 900; /* Extra Bold */
+    text-shadow: 0 0 20px rgba(255, 138, 61, 0.4); /* Resplandor sutil con el color de contraste */
+    letter-spacing: 5px;
+}
+
+/* Animaciones */
+@keyframes logoEntrance {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes logoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes cardEntrance {
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.info-status {
+    position: absolute;
+    bottom: 40px;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    font-size: 12px;
+    color: #ff8a3d; /* Resalta el estado con el naranja de contraste */
+}
