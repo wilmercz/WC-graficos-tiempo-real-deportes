@@ -14,7 +14,7 @@
     display: block; /* Siempre 'block' para que la transición de transform funcione */
     opacity: 0;
     z-index: 200; /* Por encima de otros paneles */
-    transition: opacity var(--animacion-duracion) var(--animacion-tipo), transform var(--animacion-duracion) var(--animacion-tipo);
+    transition: opacity var(--animacion-duracion) var(--animacion-tipo), transform var(--animacion-duracion) var(--animacion-tipo), bottom 0.5s ease;
     pointer-events: none; /* No debe ser clickeable */
 }
 
@@ -24,6 +24,11 @@
     /* Sube a su posición final */
     transform: translateY(0);
     pointer-events: auto;
+}
+
+/* Estado dinámico: Sube el panel cuando el marcador de básquet está activo */
+#panel-tercios.modo-basquet {
+    bottom: 18vh;
 }
 
 .tercio-wrapper {

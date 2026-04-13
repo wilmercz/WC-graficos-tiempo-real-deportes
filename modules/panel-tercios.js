@@ -68,6 +68,14 @@ class PanelTercios {
             const actionTimestamp = data.ACCION_TIMESTAMP; 
             const audioUrl = data.ACCION_AUDIO_URL;
 
+            // Detectar si estamos en modo básquet para subir el panel
+            const mostrarBasquet = data.MARCADOR_BASQUET === true || data.MARCADOR_BASQUET === 'true';
+            if (mostrarBasquet) {
+                this.container.classList.add('modo-basquet');
+            } else {
+                this.container.classList.remove('modo-basquet');
+            }
+
             // Detectar si el switch acaba de ser encendido (de false a true)
             const justoActivado = mostrarManual && !this.lastMostrarManual;
             
