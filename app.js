@@ -18,6 +18,7 @@ import PanelPenales from './modules/panel-penales.js';
 import PanelTercios from './modules/panel-tercios.js';
 import PanelPublicidad from './modules/panel-publicidad.js';
 import PanelPortada from './modules/panel-portada.js';
+import PanelTablaPosiciones from './modules/panel-tabla-posiciones.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -95,6 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
         panelPublicidad.initialize();
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelPublicidad:", error);
+    }
+
+    // Tabla de Posiciones
+    try {
+        const panelTablaPosiciones = new PanelTablaPosiciones(db);
+        panelTablaPosiciones.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelTablaPosiciones:", error);
     }
 
     // Audio Manager (Música de fondo / Cortinas)

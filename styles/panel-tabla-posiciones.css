@@ -1,0 +1,151 @@
+/* ===============================
+   PANEL TABLA DE POSICIONES
+   =============================== */
+
+#panel-tabla-posiciones {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* Fondo oscuro semi-transparente para opacar la cámara entera */
+    background-color: rgba(0, 0, 0, 0.65);
+    z-index: 180;
+    display: none;
+    align-items: center;     /* Centrado vertical */
+    justify-content: center; /* Centrado horizontal */
+    opacity: 0;
+    transition: opacity var(--animacion-duracion) var(--animacion-tipo);
+}
+
+#panel-tabla-posiciones.visible {
+    opacity: 1;
+}
+
+.tabla-posiciones-wrapper {
+    /* Fondo 70% opaco para dejar ver la transmisión de fondo */
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Un ligero difuminado de lo que hay atrás (da un look muy moderno) */
+    backdrop-filter: blur(4px);
+    
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--sombra-fuerte);
+    font-family: Arial, Helvetica, sans-serif;
+    
+    width: 85%;
+    max-width: 800px; /* Ajuste para adaptarse mejor a la pantalla */
+}
+
+.tabla-header {
+    padding: 8px 15px; /* Altura de la fila reducida */
+    text-align: center;
+    background-color: #2e5bba; /* Color de fondo actualizado */
+    border-bottom: 3px solid var(--color-secundario);
+}
+
+.tabla-header h2 {
+    margin: 0;
+    font-size: 20px; /* Texto reducido para acoplarse al nuevo alto */
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #ffffff; /* Letra en blanco puro para máximo contraste */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6); /* Sombra oscura para separar del fondo azul */
+}
+
+.tabla-body {
+    padding: 15px 25px 25px 25px;
+}
+
+.tabla-no-data {
+    text-align: center;
+    color: var(--color-texto-secundario);
+    padding: 30px;
+    font-size: 18px;
+}
+
+/* --- FILAS --- */
+.tabla-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0; /* Ajustado al texto para no pintar exceso de blanco */
+}
+
+.header-row {
+    font-weight: bold;
+    color: var(--color-texto-secundario);
+    font-size: 14px;
+    text-transform: uppercase;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 10px; /* Espacio antes de los datos */
+    padding-bottom: 8px;
+}
+
+.data-row {
+    background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco por fila para contrastar */
+    border-radius: 6px;
+    margin-bottom: 6px; /* Separación entre filas para ver el fondo */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    color: #000000; /* Letras en negro */
+    line-height: 1.2;
+
+    /* Inicialmente invisible para que la animación se encargue de mostrarla */
+    opacity: 0;
+    transform: translateY(30px);
+    animation: rowSlideUp 0.5s forwards ease-out;
+}
+
+/* --- COLUMNAS --- */
+.col-pos, .col-stat {
+    width: 50px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.header-row .col-pos, .header-row .col-stat, .header-row .col-equipo {
+    color: var(--color-texto-secundario); /* Cabecera mantiene su color */
+}
+
+.data-row .col-pos, .data-row .col-stat, .data-row .col-equipo {
+    color: #000000; /* Forzamos letras negras en los datos */
+}
+
+.col-equipo {
+    flex: 1; /* Ocupa el espacio restante */
+    font-size: 18px; /* Tamaño adaptado a la pantalla */
+    font-weight: bold;
+    text-align: left;
+    padding-left: 15px;
+}
+
+.col-pts {
+    width: 70px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.data-row .col-pts {
+    background-color: #FF6B00; /* Fondo naranja forzado */
+    color: #ffffff !important; /* Letras 100% blancas forzadas para contraste */
+    border-radius: 4px;
+    padding: 4px 0;
+}
+
+/* --- ANIMACIONES --- */
+@keyframes rowSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- CLASES UTILITARIAS --- */
+.oculto-forzado {
+    display: none !important; /* Fuerza a ocultar evitando ser sobreescrito */
+}
