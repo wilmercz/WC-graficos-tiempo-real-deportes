@@ -19,6 +19,7 @@ import PanelTercios from './modules/panel-tercios.js';
 import PanelPublicidad from './modules/panel-publicidad.js';
 import PanelPortada from './modules/panel-portada.js';
 import PanelTablaPosiciones from './modules/panel-tabla-posiciones.js';
+import PanelComparativa from './modules/panel-comparativa.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -104,6 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
         panelTablaPosiciones.initialize();
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelTablaPosiciones:", error);
+    }
+
+    // Panel Comparativa Equipos (Head to Head)
+    try {
+        const panelComparativa = new PanelComparativa(db);
+        panelComparativa.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelComparativa:", error);
     }
 
     // Audio Manager (Música de fondo / Cortinas)

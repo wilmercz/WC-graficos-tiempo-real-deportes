@@ -1,0 +1,73 @@
+/* ===============================
+   PANEL COMPARATIVA (HEAD TO HEAD)
+   =============================== */
+
+#panel-comparativa {
+    position: absolute;
+    bottom: 12vh; /* Justo por encima del marcador inferior / tercios */
+    left: 50%;
+    transform: translateX(-50%) translateY(30px); /* Ligeramente abajo para la animación */
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    z-index: 170; /* Debajo de alertas importantes, pero por encima de logos */
+    pointer-events: none;
+    display: none;
+}
+
+#panel-comparativa.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.comparativa-wrapper {
+    display: flex;
+    align-items: center;
+    /* Un fondo con gradiente elegante y difuminado */
+    background: linear-gradient(90deg, rgba(22, 45, 92, 0.95) 0%, rgba(13, 26, 54, 0.95) 50%, rgba(22, 45, 92, 0.95) 100%);
+    backdrop-filter: blur(5px);
+    border-top: 3px solid var(--color-primario);
+    border-bottom: 3px solid var(--color-primario);
+    border-radius: 8px;
+    padding: 12px 40px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    gap: 40px;
+    text-transform: uppercase;
+}
+
+.comp-equipo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 160px;
+}
+
+.comp-pos {
+    font-size: 14px;
+    color: var(--color-primario);
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+}
+
+.comp-nombre {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--color-texto-primario);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    white-space: nowrap;
+}
+
+.comp-pts {
+    font-size: 16px;
+    color: var(--color-texto-secundario);
+    margin-top: 4px;
+}
+
+.comp-vs {
+    font-size: 16px;
+    color: #ff8a3d;
+    font-weight: bold;
+    font-style: italic;
+}
