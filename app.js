@@ -21,6 +21,7 @@ import PanelPortada from './modules/panel-portada.js';
 import PanelTablaPosiciones from './modules/panel-tabla-posiciones.js';
 import PanelComparativa from './modules/panel-comparativa.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
+import PanelRedes from './modules/panel-redes.js';
 
 // 2. CONFIGURACIÓN DE FIREBASE
 // Inicializar Firebase
@@ -113,6 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
         panelComparativa.initialize();
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelComparativa:", error);
+    }
+
+    // Panel Redes Sociales
+    try {
+        const panelRedes = new PanelRedes(db);
+        panelRedes.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelRedes:", error);
     }
 
     // Audio Manager (Música de fondo / Cortinas)

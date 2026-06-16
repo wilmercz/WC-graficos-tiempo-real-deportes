@@ -13,6 +13,7 @@ class PanelRedes {
         this.lastMostrarRedes = false;
         this.hideTimeout = null;
         this.displayDuration = 15000; // 15 segundos antes de ocultarse
+        this.logoUrl = 'tu-logo.png'; // Ruta por defecto
 
         console.log('📢 PanelRedes: Inicializando...');
     }
@@ -22,8 +23,18 @@ class PanelRedes {
             console.error('❌ PanelRedes: Contenedor #grafico-redes no encontrado en el HTML.');
             return;
         }
+        this.listenLogo();
         this.listenForActions();
         console.log('✅ PanelRedes: Escuchando órdenes.');
+    }
+
+    listenLogo() {
+        this.db.ref('/CONFIGURACION_OVERLAYWEB/LOGOS/logo_redes').on('value', (snapshot) => {
+            const url = snapshot.val();
+            if (url && typeof url === 'string' && url.trim() !== '') {
+                this.logoUrl = url;
+            }
+        });
     }
 
     listenForActions() {
@@ -34,6 +45,9 @@ class PanelRedes {
             // Capturamos los campos exactos
             const mostrar = data.Mostrar_Redes === true || data.Mostrar_Redes === 'true';
             const texto = data.Texto_Redes || 'ArkiMedes TV';
+            
+            // Usar la ruta del logo almacenada desde la configuración global
+            const logoUrl = this.logoUrl; 
 
             const justoActivado = mostrar && !this.lastMostrarRedes;
 
@@ -48,16 +62,28 @@ class PanelRedes {
 
             // Si se acaba de encender, mostramos el panel
             if (justoActivado) {
-                this.showPanel(texto);
+                this.showPanel(texto, logoUrl);
             }
 
             this.lastMostrarRedes = mostrar;
         });
     }
 
-    showPanel(texto) {
+    showPanel(texto, logoUrl) {
         const textoEl = document.getElementById('texto-redes-dinamico');
+        const logoEl = document.getElementById('redes-logo');
+
         if (textoEl) textoEl.innerText = texto;
+
+        // Mostrar la imagen solo si se envió una URL válida
+        if (logoEl) {
+            if (logoUrl && logoUrl.trim() !== '') {
+                logoEl.src = logoUrl;
+                logoEl.style.display = 'block';
+            } else {
+                logoEl.style.display = 'none';
+            }
+        }
 
         this.container.classList.add('visible');
 
