@@ -1,0 +1,100 @@
+/* ===============================
+   PANEL REDES SOCIALES
+   =============================== */
+
+#grafico-redes {
+  position: absolute;
+  right: 0;
+  top: 45%; /* Al centro del eje Y */
+  display: flex;
+  align-items: center;
+  background: linear-gradient(90deg, rgba(16, 102, 255, 0.95) 0%, rgba(16, 50, 100, 0.9) 100%);
+  color: white;
+  padding: 6px 20px 6px 10px;
+  border-radius: 30px 0 0 30px;
+  box-shadow: var(--sombra-media);
+  z-index: 100;
+  
+  /* Transición de entrada/salida general */
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+
+/* Clase que el JS añadirá para mostrar el panel */
+#grafico-redes.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.redes-wrapper {
+  display: grid;
+  align-items: center;
+  justify-items: start;
+}
+
+.redes-escena {
+  grid-area: 1 / 1; /* Superpone las escenas */
+  display: flex;
+  align-items: center;
+  width: 100%;
+  opacity: 0;
+}
+
+.redes-icono {
+  background: white;
+  color: #1066ff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.redes-icono svg {
+  width: 14px;
+  height: 14px;
+}
+
+.redes-titulo {
+  font-size: 15px;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+#grafico-redes h1 {
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  font-weight: bold;
+  background: transparent;
+  color: white;
+  white-space: nowrap;
+}
+
+/* Las animaciones internas solo ocurren cuando el panel es .visible */
+#grafico-redes.visible .escena-1 {
+  animation: inOutEscena1 4s ease forwards 0.5s;
+}
+
+#grafico-redes.visible .escena-2 {
+  animation: inEscena2 0.5s ease forwards 4.5s;
+}
+
+@keyframes inOutEscena1 {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+@keyframes inEscena2 {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
