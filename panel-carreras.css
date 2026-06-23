@@ -1,0 +1,89 @@
+/* ===============================
+   PANEL CARRERAS (Auto, Moto, Ciclismo, Patinaje)
+   =============================== */
+
+#panel-carreras {
+    position: absolute;
+    top: 5vh;          /* Misma altura que el marcador de fútbol */
+    left: 5vw;         /* Pegado a la izquierda */
+    z-index: 140;      /* Por debajo de logos/alertas, pero arriba de video */
+    display: none;     /* Oculto por defecto */
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.carreras-wrapper {
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--sombra-media);
+    border-radius: 4px;
+    overflow: hidden;
+    transform-origin: top left;
+}
+
+/* --- FILA 1: 4 COLUMNAS --- */
+.carreras-row-top {
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.85); /* Fondo negro */
+    border: 2px solid var(--color-primario); /* Borde perimetral azul */
+    border-bottom: none; /* Se conecta con la fila 2 */
+    height: 40px;
+}
+
+.carreras-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 15px;
+    color: #FFFFFF;
+    font-size: 18px;
+    font-weight: bold;
+    white-space: nowrap;
+    border-right: 2px solid var(--color-primario); /* Línea azul separadora */
+}
+
+/* La última columna no debe tener borde derecho */
+.carreras-col:last-child {
+    border-right: none;
+}
+
+/* Columna de Cronómetro */
+.col-crono {
+    font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada */
+    min-width: 90px;
+    letter-spacing: 1px;
+}
+
+/* Columna de Progreso (Vueltas / KM) */
+.col-progreso {
+    background-color: rgba(255, 255, 255, 0.05); /* Ligero resalte */
+}
+
+.progreso-label {
+    font-size: 14px;
+    color: var(--color-texto-secundario);
+    margin-right: 8px;
+}
+
+.progreso-valor {
+    color: var(--color-secundario); /* Naranja / Branding */
+    font-size: 20px;
+    font-weight: 900;
+}
+
+/* --- FILA 2: CATEGORÍA / CAMPEONATO --- */
+.carreras-row-bottom {
+    background-color: var(--color-primario); /* Fondo Azul */
+    color: var(--color-texto-primario);      /* Letras Blancas */
+    text-align: center;
+    padding: 4px 10px;
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 2px solid var(--color-primario); /* Mantiene el grosor del borde */
+}
+
+/* --- ANIMACIONES --- */
+.tiempo-rojo {
+    color: #FF3333 !important;
+}
