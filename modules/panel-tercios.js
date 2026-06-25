@@ -120,6 +120,14 @@ class PanelTercios {
         linea1El.textContent = linea1 || '';
         linea2El.textContent = linea2 || '';
 
+        // AJUSTE DE TAMAÑO DE FUENTE:
+        // Si hay una segunda línea, aumentamos el tamaño de la primera.
+        if (linea2) {
+            linea1El.style.fontSize = '22px'; // Aumentado de 20px a 22px
+        } else {
+            linea1El.style.fontSize = ''; // Restablecer al valor por defecto del CSS (20px)
+        }
+
         // Reproducir audio si se proporciona una URL
         if (audioUrl) {
             try {
