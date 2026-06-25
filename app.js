@@ -21,6 +21,7 @@ import PanelPortada from './modules/panel-portada.js';
 import PanelTablaPosiciones from './modules/panel-tabla-posiciones.js';
 import PanelComparativa from './modules/panel-comparativa.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
+import PanelResumenFinal from './modules/panel-resumen-final.js';
 import PanelRedes from './modules/panel-redes.js';
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -122,6 +123,14 @@ document.addEventListener('DOMContentLoaded', () => {
         panelRedes.initialize();
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelRedes:", error);
+    }
+
+    // Panel Resumen Final
+    try {
+        const panelResumenFinal = new PanelResumenFinal(db);
+        panelResumenFinal.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelResumenFinal:", error);
     }
 
     // Audio Manager (Música de fondo / Cortinas)

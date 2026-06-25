@@ -1,0 +1,157 @@
+/* ===============================
+   PANEL RESUMEN FINAL
+   =============================== */
+
+#panel-resumen-final {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.65); /* Fondo oscuro para enfocar */
+    z-index: 190;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+#panel-resumen-final.visible {
+    opacity: 1;
+}
+
+.resumen-wrapper {
+    background: linear-gradient(160deg, rgba(22, 45, 92, 0.95) 0%, rgba(13, 26, 54, 0.95) 100%);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    box-shadow: var(--sombra-fuerte);
+    font-family: Arial, Helvetica, sans-serif;
+    width: 85%;
+    max-width: 850px;
+    padding: 20px 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    /* Animación de entrada */
+    transform: translateY(40px) scale(0.98);
+    transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+#panel-resumen-final.visible .resumen-wrapper {
+    transform: translateY(0) scale(1);
+}
+
+.resumen-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 3px solid var(--color-primario);
+    padding-bottom: 15px;
+}
+
+.resumen-header h2 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+.resumen-header p {
+    margin: 5px 0 0 0;
+    font-size: 16px;
+    color: #ffc400;
+    font-weight: bold;
+}
+
+/**NOMBRES DE LOS EQUIPOS*/
+.resumen-marcador-final {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    text-align: center;
+    font-size: 42px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    background-color: var(--color-primario);
+    color: #000000;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.resumen-equipo-nombre {
+    font-size: 25px;
+    text-transform: uppercase;
+    padding: 8px 15px;
+    border-radius: 6px;
+    text-shadow: none;
+}
+
+.resumen-equipo-nombre-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.resumen-goles {
+    background-color: #ff8a3d;
+    padding: 5px 25px;
+    border-radius: 8px;
+    margin: 0 20px;
+    color: #000000; /* Letras negras para buen contraste con el fondo naranja */
+}
+
+.resumen-detalles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Para los goleadores */
+    gap: 10px 30px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.resumen-seccion-goles {
+    grid-column: span 1; /* Cada sección de goles ocupa una columna */
+    min-height: 50px; /* Espacio reservado para la lista de goles */
+    color: var(--color-texto-secundario);
+    font-style: italic;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.stat-row {
+    grid-column: 1 / -1; /* Ocupa todo el ancho del grid */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #000000;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.stat-label {
+    font-size: 18px;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.stat-valor {
+    font-weight: bold;
+    font-size: 20px;
+    background-color: var(--color-secundario);
+    color: #FFFFFF;
+    padding: 2px 10px;
+    border-radius: 4px;
+    min-width: 50px;
+    text-align: center;
+}
+
+@keyframes statItemSlideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
