@@ -16,7 +16,7 @@ class PanelGol {
         this.lastGol2 = null;
 
         this.hideTimeout = null;
-        this.displayDuration = 3000; // 3 segundos de visibilidad
+        this.displayDuration = 4000; // 6 segundos de visibilidad
 
         console.log('⚽ PanelGol: Inicializando...');
     }
@@ -42,7 +42,7 @@ class PanelGol {
                 <div class="gol-capa capa-blanca"></div>
                 <div class="gol-capa capa-naranja"></div>
                 <div class="gol-capa capa-azul"></div>
-                <span class="gol-texto">GOL</span>
+                <span class="gol-texto">GOOOOOOL!</span>
             </div>
         `;
     }
@@ -89,11 +89,20 @@ class PanelGol {
                 clearTimeout(this.hideTimeout);
             }
 
+            // Ajustar ancho y alto al del marcador de fútbol
+            const marcadorEl = document.getElementById('panel-marcador');
+            if (marcadorEl) {
+                const marcadorWidth = marcadorEl.offsetWidth;
+                const marcadorHeight = marcadorEl.offsetHeight;
+                this.container.style.width = `${marcadorWidth}px`;
+                this.container.style.height = `${marcadorHeight}px`;
+            }
+
             // Volver a crear el HTML para reiniciar las animaciones
             this.renderBase();
 
             // Reiniciar la animación CSS
-            this.container.classList.remove('visible');
+            this.container.classList.remove('visible', 'hiding');
             void this.container.offsetWidth;
             this.container.classList.add('visible');
 
@@ -101,8 +110,13 @@ class PanelGol {
 
             // Ocultar después del tiempo configurado
             this.hideTimeout = setTimeout(() => {
-                console.log('🙈 PanelGol: Ocultando animación.');
-                this.container.classList.remove('visible');
+                console.log('🙈 PanelGol: Iniciando animación de salida.');
+                this.container.classList.add('hiding');
+
+                // Esperar a que termine la animación de salida para ocultar del todo
+                setTimeout(() => {
+                    this.container.classList.remove('visible', 'hiding');
+                }, 500); // Debe coincidir con la duración de slideOutLeft
             }, this.displayDuration);
         }
     });

@@ -8,9 +8,6 @@
     left: 20px; /* Misma posición que el marcador de fútbol */
     z-index: 10000; /* ⚡ MÁXIMA PRIORIDAD: Por encima de publicidad (9999) y todo lo demás */
     
-    /* Dimensiones - deben ser suficientes para el texto */
-    width: 250px;
-    height: 60px;
 
     /* Oculto por defecto y listo para la animación */
     opacity: 0;
@@ -19,7 +16,7 @@
     overflow: hidden; /* Clave para que las capas no se salgan */
     
     /* Transición para desaparecer suavemente */
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.5s ease;
 }
 
 /* Contenedor del texto y las capas de animación */
@@ -30,9 +27,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    /* --- DEBUGGING: Fondo rojo temporal para ver el contenedor INTERNO --- */
-    background-color: rgba(255, 0, 0, 0.5);
 }
 
 /* Capas de fondo animadas (blanco, naranja, azul) */
@@ -64,6 +58,11 @@
     /* Animación del texto */
     opacity: 0;
     transform: scale(0.5);
+
+    /* Para la nueva animación de brillo */
+    position: relative;
+    overflow: hidden;
+    -webkit-background-clip: text;
 }
 
 /* --- ESTADO VISIBLE Y ANIMACIONES --- */
@@ -77,6 +76,12 @@
     animation: fadeIn 0.1s forwards;
 }
 
+/* Nueva clase para la animación de salida */
+#panel-gol.hiding {
+    animation: slideOutLeft 0.5s forwards cubic-bezier(0.6, -0.28, 0.735, 0.045);
+}
+
+
 /* Cuando el panel se hace visible, se disparan las animaciones en cadena */
 #panel-gol.visible .capa-blanca {
     animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
@@ -85,10 +90,15 @@
     animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.1s; /* 100ms de retraso */
 }
 #panel-gol.visible .capa-azul {
-    animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.2s; /* 200ms de retraso */
+    /* 1. Entra y 2. Comienza a palpitar el fondo */
+    animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.2s,
+               palpitarFondo 0.8s infinite ease-in-out 1s;
 }
 #panel-gol.visible .gol-texto {
-    animation: textPopIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s; /* 400ms de retraso */
+    /* 1. Entra y 2. Comienza a palpitar el texto */
+    animation: textPopIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s,
+    /* 2. Animación de palpitación que se repite */
+               palpitarTexto 0.8s infinite ease-in-out 1.2s;
 }
 
 @keyframes slideInRight {
@@ -97,11 +107,30 @@
 }
 
 @keyframes textPopIn {
-    from { opacity: 0; transform: scale(0.5); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1.0); }
 }
 
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@keyframes palpitarTexto {
+    0%, 100% { transform: scale(1.0); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes palpitarFondo {
+    0%, 100% {
+        background-color: #0d2247; /* Azul oscuro original */
+    }
+    50% {
+        background-color: #b30000; /* Rojo oscuro e intenso */
+    }
+}
+
+@keyframes slideOutLeft {
+    from { transform: translateX(0%); opacity: 1; }
+    to { transform: translateX(-110%); opacity: 1; } /* Lo sacamos completamente de la pantalla */
 }
