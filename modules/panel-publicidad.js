@@ -14,6 +14,9 @@ class PanelPublicidad {
         this.colaPublicidad = [];
         this.timerDuracion = null;
         this.timerTransicion = null;
+        this.lastMostrarState = false; // Rastreador del estado del interruptor
+        this.lastActivationId = null;  // Rastreador para forzar la reactivación
+        this.pubRef = this.db.ref('/ARKI_DEPORTES/PUBLICIDAD');
         
         this.dbPath = '/ARKI_DEPORTES/PUBLICIDAD';
         console.warn('📺 PanelPublicidad: Constructor llamado. Instancia creada.');
@@ -26,9 +29,8 @@ class PanelPublicidad {
         }
 
         console.warn(`📡 PanelPublicidad: Escuchando cambios en ${this.dbPath}`);
-        const pubRef = this.db.ref(this.dbPath);
 
-        pubRef.on('value', 
+        this.pubRef.on('value', 
 
             (snapshot) => {
                 const data = snapshot.val();
@@ -46,60 +48,90 @@ class PanelPublicidad {
      * Procesa los datos que llegan de Firebase
      */
     procesarDatos(data) {
-        console.log("⚙️ procesarDatos ejecutándose...");
-        // 1. Detener cualquier secuencia actual y limpiar
-        this.detenerSecuencia();
+        console.log('➡️ procesarDatos: Iniciando con data:', data);
 
-        if (!data) return;
-
-        // 2. Si llega una orden explícita de "no mostrar", terminamos aquí
-        if (data.mostrar === false) {
-            console.warn("🛑 Orden recibida: mostrar = false. Publicidad detenida.");
+        if (!data) {
+            console.log('➡️ procesarDatos: Datos nulos, deteniendo secuencia.');
+            this.detenerSecuencia();
             return;
         }
 
-        // 3. Convertir la entrada en un array (Cola de reproducción)
-        let items = [];
-        
-        if (Array.isArray(data)) {
-            items = data;
-        } else if (typeof data === 'object') {
-            if (data.contenido && data.tipo) {
-                items = [data];
+        const mostrar = data.mostrar === true || data.mostrar === 'true';
+        const activationId = data.activar_id;
+
+        // Si el interruptor está apagado, nos aseguramos de que todo esté detenido.
+        if (!mostrar) {
+            if (this.lastMostrarState) { // Solo actuar si antes estaba encendido
+                console.warn("🛑 Orden recibida: mostrar = false. Publicidad detenida.");
+                this.detenerSecuencia();
+            }
+            this.lastMostrarState = false;
+            this.lastActivationId = null;
+            return;
+        }
+
+        // Detectar si se debe iniciar la secuencia:
+        // 1. El interruptor acaba de pasar de false a true.
+        // 2. O el ID de activación ha cambiado (para repetir el mismo anuncio).
+        const justoActivado = mostrar && !this.lastMostrarState;
+        const contenidoNuevo = activationId && activationId !== this.lastActivationId;
+
+        if (justoActivado || contenidoNuevo) {
+            console.log(`▶️ INICIANDO SECUENCIA (Activación: ${activationId})`);
+            this.lastActivationId = activationId;
+            
+            // Limpiamos timers y cola, pero no ocultamos el panel ni tocamos Firebase aún.
+            if (this.timerDuracion) clearTimeout(this.timerDuracion);
+            if (this.timerTransicion) clearTimeout(this.timerTransicion);
+            this.colaPublicidad = [];
+
+            // --- LÓGICA DE PARSEO MEJORADA ---
+            let items = [];
+            if (Array.isArray(data.items)) {
+                items = data.items;
+            } else if (typeof data === 'object') {
+                items = Object.values(data).filter(item => typeof item === 'object' && item !== null && item.contenido && item.tipo);
+            }
+
+            // Filtrar solo los elementos que son válidos para mostrar
+            this.colaPublicidad = items.filter(item => item && item.contenido && item.tipo);
+            
+            console.log(`📋 Elementos válidos en cola: ${this.colaPublicidad.length}`, JSON.parse(JSON.stringify(this.colaPublicidad)));
+
+
+            // Iniciar la secuencia si hay elementos en la cola
+            if (this.colaPublicidad.length > 0) {
+                this.mostrarSiguiente();
             } else {
-                items = Object.values(data);
+                console.log('▶️ Secuencia iniciada pero sin elementos válidos en la cola.');
             }
         }
-
-        // 4. Filtrar elementos válidos
-        this.colaPublicidad = items.filter(item => item && item.contenido && item.mostrar !== false);
-        console.log(`📋 Elementos válidos en cola: ${this.colaPublicidad.length}`, this.colaPublicidad);
-
-        // 5. Iniciar la secuencia si hay elementos en la cola
-        if (this.colaPublicidad.length > 0) {
-            console.log(`▶️ Iniciando secuencia con ${this.colaPublicidad.length} anuncio(s)`);
-            this.mostrarSiguiente();
-        }
+        this.lastMostrarState = mostrar;
     }
 
     /**
      * Detiene la secuencia actual, limpia timers y oculta el panel.
      */
     detenerSecuencia() {
+        console.log('🔴 detenerSecuencia: Limpiando timers y ocultando panel.');
         if (this.timerDuracion) clearTimeout(this.timerDuracion);
         if (this.timerTransicion) clearTimeout(this.timerTransicion);
         this.timerDuracion = null;
         this.timerTransicion = null;
         this.colaPublicidad = [];
-        
+
         this.panel.classList.remove('mostrar');
-        
+
         // Después de la transición de salida, limpiar el contenido.
-        setTimeout(() => {
+        this.timerTransicion = setTimeout(() => {
             if (!this.panel.classList.contains('mostrar')) {
                 this.panel.innerHTML = '';
             }
         }, 800); // Coincide con la duración de la transición en CSS
+
+        // Como último paso, nos aseguramos de que el estado en Firebase sea 'false'.
+        // Esta acción puede causar un evento de Firebase, pero la lógica en procesarDatos
+        // debería manejarlo correctamente sin reiniciar el bucle.
     }
 
     /**
@@ -107,13 +139,19 @@ class PanelPublicidad {
      */
     mostrarSiguiente() {
         if (this.colaPublicidad.length === 0) {
-            console.log("🏁 Fin de la lista de reproducción.");
+            console.log("🏁 Fin de la lista de reproducción. APAGANDO en Firebase.");
+            
+            // 💡 CORRECCIÓN: Apagar en Firebase y LUEGO limpiar.
+            this.pubRef.update({
+                'mostrar': false,
+                'activar_id': null
+            }).catch(err => console.error('❌ Publicidad: Error al apagar el interruptor en Firebase.', err));
+            
             this.detenerSecuencia();
             return;
         }
 
         const anuncio = this.colaPublicidad.shift();
-        console.log(`👁️ PREPARANDO ANUNCIO: Tipo=${anuncio.tipo}, URL=${anuncio.contenido}`);
         this.renderizarContenido(anuncio);
     }
 
@@ -121,12 +159,13 @@ class PanelPublicidad {
      * Oculta el panel y llama a `mostrarSiguiente` para continuar la cola.
      */
     ocultarYContinuar() {
+        console.log('🔄 ocultarYContinuar: Ocultando anuncio actual y preparando el siguiente.');
         this.panel.classList.remove('mostrar');
 
         if (this.timerDuracion) clearTimeout(this.timerDuracion);
         if (this.timerTransicion) clearTimeout(this.timerTransicion);
 
-        // Esperar a que termine la animación de salida para continuar.
+        // Esperar a que termine la animación de salida.
         this.timerTransicion = setTimeout(() => {
             this.panel.innerHTML = '';
             this.mostrarSiguiente();
@@ -139,7 +178,7 @@ class PanelPublicidad {
      */
     renderizarContenido(anuncio) {
         this.panel.innerHTML = '';
-        const { tipo, contenido } = anuncio;
+        const { tipo, contenido, duracion } = anuncio; // Extraemos la duración
 
         const mostrarPanelYProgramarSalida = (duracionMs) => {
             this.panel.classList.add('mostrar');
@@ -151,13 +190,14 @@ class PanelPublicidad {
         if (tipo === 'imagen') {
             const img = document.createElement('img');
             img.onload = () => {
-                console.log(`🖼️ Imagen cargada: ${contenido}. Mostrando por 25 segundos.`);
-                // Duración fija de 25 segundos para imágenes.
-                mostrarPanelYProgramarSalida(25000);
+                // Usar duración de Kotlin si existe, si no, 25 segundos por defecto.
+                const duracionMs = duracion ? duracion * 1000 : 25000;
+                console.log(`🖼️ Imagen cargada. Mostrando por ${duracionMs / 1000}s.`);
+                mostrarPanelYProgramarSalida(duracionMs);
             };
             img.onerror = () => {
                 console.error(`❌ Error al cargar imagen: ${contenido}. Saltando al siguiente.`);
-                this.mostrarSiguiente(); // Continuar con el siguiente anuncio.
+                this.mostrarSiguiente();
             };
             this.panel.appendChild(img);
             img.src = contenido;
@@ -169,17 +209,17 @@ class PanelPublicidad {
 
             video.onloadedmetadata = () => {
                 const duracionVideo = video.duration;
-                console.log(`📹 Metadatos de video cargados. Duración: ${duracionVideo}s`);
-                // Usar la duración del video. Fallback a 25s si no es válida (ej. stream).
-                const duracionMs = (duracionVideo && isFinite(duracionVideo))
-                    ? duracionVideo * 1000
-                    : 25000;
+                // Prioridad: 1. Duración de Kotlin, 2. Duración del video, 3. Fallback a 25s.
+                const duracionMs = duracion ? duracion * 1000 
+                                 : (duracionVideo && isFinite(duracionVideo)) ? duracionVideo * 1000 
+                                 : 25000;
+
                 video.dataset.duracionMs = duracionMs;
             };
 
             video.oncanplay = () => {
                 const duracionMs = parseInt(video.dataset.duracionMs, 10) || 25000;
-                console.log(`▶️ Video listo para reproducir. Mostrando por ${duracionMs / 1000} segundos.`);
+                console.log(`▶️ Video listo. Mostrando por ${duracionMs / 1000}s.`);
                 mostrarPanelYProgramarSalida(duracionMs);
                 video.play().catch(e => console.warn("Autoplay de video bloqueado por el navegador.", e));
             };
@@ -191,7 +231,7 @@ class PanelPublicidad {
 
             this.panel.appendChild(video);
             video.src = contenido;
-            video.load(); // Iniciar la carga del video.
+            video.load();
         } else {
             console.warn(`Tipo de contenido no soportado: "${tipo}". Saltando.`);
             setTimeout(() => this.mostrarSiguiente(), 50);
