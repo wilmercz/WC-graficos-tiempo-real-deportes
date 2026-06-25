@@ -15,6 +15,7 @@ import PanelLogos from './modules/panel-logos.js';
 import PanelMarcador from './modules/panel-marcador.js';
 import PanelMarcadorBasquet from './modules/panel-marcador-basquet.js';
 import PanelPenales from './modules/panel-penales.js';
+import PanelGol from './modules/panel-gol.js'; // <-- IMPORTANTE: Importar el nuevo panel
 import PanelTercios from './modules/panel-tercios.js';
 import PanelPublicidad from './modules/panel-publicidad.js';
 import PanelPortada from './modules/panel-portada.js';
@@ -74,6 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
         panelMarcadorBasquet.initialize();
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelMarcadorBasquet:", error);
+    }
+
+    // Panel de Animación de Gol
+    try {
+        const panelGol = new PanelGol(db);
+        panelGol.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelGol:", error);
     }
 
     // Penales

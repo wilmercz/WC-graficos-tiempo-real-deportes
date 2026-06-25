@@ -1,0 +1,107 @@
+/* ===============================
+   PANEL ANIMACION GOL
+   =============================== */
+
+#panel-gol {
+    position: absolute;
+    top: 20px; /* Misma altura que el marcador de fútbol */
+    left: 20px; /* Misma posición que el marcador de fútbol */
+    z-index: 10000; /* ⚡ MÁXIMA PRIORIDAD: Por encima de publicidad (9999) y todo lo demás */
+    
+    /* Dimensiones - deben ser suficientes para el texto */
+    width: 250px;
+    height: 60px;
+
+    /* Oculto por defecto y listo para la animación */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    overflow: hidden; /* Clave para que las capas no se salgan */
+    
+    /* Transición para desaparecer suavemente */
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Contenedor del texto y las capas de animación */
+.gol-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* --- DEBUGGING: Fondo rojo temporal para ver el contenedor INTERNO --- */
+    background-color: rgba(255, 0, 0, 0.5);
+}
+
+/* Capas de fondo animadas (blanco, naranja, azul) */
+.gol-capa {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateX(-101%); /* Inician fuera, a la izquierda */
+}
+
+.capa-blanca { background-color: #FFFFFF; z-index: 1; }
+.capa-naranja { background-color: #FF6B00; z-index: 2; }
+.capa-azul { background-color: #0d2247; z-index: 3; }
+
+/* Texto "GOL" */
+.gol-texto {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 48px;
+    font-weight: 900; /* Extra Bold */
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    
+    z-index: 4; /* Por encima de todas las capas */
+    
+    /* Animación del texto */
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+/* --- ESTADO VISIBLE Y ANIMACIONES --- */
+
+#panel-gol.visible {
+    opacity: 1;
+    visibility: visible;
+    /* Forzamos la posición final para que no se quede fuera de pantalla */
+    transform: translateX(0); 
+    /* Forzar la aparición para asegurar que se renderice */
+    animation: fadeIn 0.1s forwards;
+}
+
+/* Cuando el panel se hace visible, se disparan las animaciones en cadena */
+#panel-gol.visible .capa-blanca {
+    animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+}
+#panel-gol.visible .capa-naranja {
+    animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.1s; /* 100ms de retraso */
+}
+#panel-gol.visible .capa-azul {
+    animation: slideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.2s; /* 200ms de retraso */
+}
+#panel-gol.visible .gol-texto {
+    animation: textPopIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s; /* 400ms de retraso */
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(-101%); }
+    to { transform: translateX(0%); }
+}
+
+@keyframes textPopIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
