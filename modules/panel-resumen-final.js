@@ -125,24 +125,28 @@ class PanelResumenFinal {
     }
 
     updateData(data) {
+        // Log para depuración
+        // Log para inspeccionar los campos problemáticos y el objeto completo.
+        console.log('🏆 PanelResumenFinal: Verificando campos ->', { TAMARILLAS2: data.TAMARILLAS2, TROJAS1: data.TROJAS1, TROJAS2: data.TROJAS2 }, 'Objeto completo:', data);
+
         // Títulos
         document.getElementById('resumen-titulo-principal').textContent = data.RESUMEN_TEXTO_SUPERIOR || 'FINAL DEL PARTIDO';
         document.getElementById('resumen-subtitulo').textContent = data.ESTADIO || '';
 
         // Marcador
-        document.getElementById('resumen-equipo-1').textContent = data.EQUIPO1 || 'EQUIPO 1';
-        document.getElementById('resumen-equipo-2').textContent = data.EQUIPO2 || 'EQUIPO 2';
+        document.getElementById('resumen-equipo-1').textContent = data.EQUIPO1 || 'EQUIPO 1'; // Corregido
+        document.getElementById('resumen-equipo-2').textContent = data.EQUIPO2 || 'EQUIPO 2'; // Corregido
         document.getElementById('resumen-goles-1').textContent = data.GOLES1 ?? 0;
         document.getElementById('resumen-goles-2').textContent = data.GOLES2 ?? 0;
 
         // Estadísticas (usando campos que podrías añadir a PARTIDOACTUAL)
-        document.getElementById('resumen-corners-1').textContent = data.TIROS_ESQUINA_1 ?? 0;
-        document.getElementById('resumen-amarillas-1').textContent = data.TARJETAS_AMARILLAS_1 ?? 0;
-        document.getElementById('resumen-rojas-1').textContent = data.TARJETAS_ROJAS_1 ?? 0;
+        document.getElementById('resumen-corners-1').textContent = data['ESQUINAS1'] ?? 0;
+        document.getElementById('resumen-amarillas-1').textContent = data['TAMARILLAS1'] ?? 0;
+        document.getElementById('resumen-rojas-1').textContent = data['TROJAS1'] ?? 0;
 
-        document.getElementById('resumen-corners-2').textContent = data.TIROS_ESQUINA_2 ?? 0;
-        document.getElementById('resumen-amarillas-2').textContent = data.TARJETAS_AMARILLAS_2 ?? 0;
-        document.getElementById('resumen-rojas-2').textContent = data.TARJETAS_ROJAS_2 ?? 0;
+        document.getElementById('resumen-corners-2').textContent = data['ESQUINAS2'] ?? 0;
+        document.getElementById('resumen-amarillas-2').textContent = data['TAMARILLAS2'] ?? 0;
+        document.getElementById('resumen-rojas-2').textContent = data['TROJAS2'] ?? 0;
 
         // NOTA: La sección de goleadores (resumen-goleadores-1 y 2) está lista en el HTML.
         // Cuando tengas los datos en Firebase, se puede añadir aquí la lógica para leerlos y mostrarlos.

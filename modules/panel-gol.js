@@ -75,14 +75,13 @@ class PanelGol {
 
         console.log(`⚽ PanelGol: Comparando... Actual(${currentGol1}, ${currentGol2}) vs Anterior(${this.lastGol1}, ${this.lastGol2})`);
 
-        // ¿Hubo gol?
-        if (currentGol1 !== this.lastGol1 || currentGol2 !== this.lastGol2) {
+        // ¿Hubo un gol real? (El nuevo puntaje es MAYOR que el anterior)
+        // Esto evita que la animación se dispare al reiniciar los marcadores a 0.
+        const huboGolEquipo1 = currentGol1 > this.lastGol1;
+        const huboGolEquipo2 = currentGol2 > this.lastGol2;
+        if (huboGolEquipo1 || huboGolEquipo2) {
 
             console.log('✅⚽✅ PanelGol: ¡GOL DETECTADO!');
-
-            // Actualizar referencia
-            this.lastGol1 = currentGol1;
-            this.lastGol2 = currentGol2;
 
             // Cancelar ocultación anterior
             if (this.hideTimeout) {
@@ -119,6 +118,10 @@ class PanelGol {
                 }, 500); // Debe coincidir con la duración de slideOutLeft
             }, this.displayDuration);
         }
+
+        // SIEMPRE actualizamos la referencia al final para la próxima comparación.
+        this.lastGol1 = currentGol1;
+        this.lastGol2 = currentGol2;
     });
 }
 }
