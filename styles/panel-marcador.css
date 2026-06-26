@@ -36,9 +36,24 @@
     white-space: nowrap;
 }
 
+/* Estado: Por Jugarse */
+.marcador-estado.por-jugarse {
+    background-color: #006400; /* Verde oscuro */
+    font-size: 15px;
+    color: #ffffff;
+}
+
+/* Estado: Entretiempo */
+.marcador-estado.entretiempo {
+    background-color:  hsl(24, 98%, 33%); /* Naranja del tema */
+    font-size: 15px;
+    color: var(--color-texto-primario);
+}
+
 /* Estado dinámico para cuando el partido ha finalizado */
 .marcador-estado.finalizado {
     background-color: #b30000; /* Rojo oscuro para indicar finalización */
+    font-size: 15px;
     color: #ffffff;
 }
 

@@ -122,8 +122,8 @@ class PanelMarcador {
      */
     updateEstadoTiempo(data) {
         const estadoEl = document.getElementById('marcador-estado');
-        // Primero, nos aseguramos de que no tenga la clase 'finalizado' por defecto.
-        estadoEl.classList.remove('finalizado');
+        // Limpiamos todas las clases de estado específicas antes de aplicar la nueva.
+        estadoEl.classList.remove('finalizado', 'entretiempo', 'por-jugarse');
 
         const numeroDeTiempo = data.NumeroDeTiempo;
 
@@ -142,6 +142,7 @@ class PanelMarcador {
         switch (numeroDeTiempo) {
             case '0T':
                 estadoEl.textContent = 'POR JUGARSE';
+                estadoEl.classList.add('por-jugarse');
                 this.stopTimer();
                 break;
             
@@ -158,6 +159,7 @@ class PanelMarcador {
 
             case '2T':
                 estadoEl.textContent = 'ENTRETIEMPO';
+                estadoEl.classList.add('entretiempo');
                 this.stopTimer();
                 break;
 
@@ -176,6 +178,7 @@ class PanelMarcador {
             default:
                 // Si el valor no es ninguno de los esperados, mostramos "POR JUGARSE" como estado inicial.
                 estadoEl.textContent = 'POR JUGARSE';
+                estadoEl.classList.add('por-jugarse');
                 this.stopTimer();
                 break;
         }
