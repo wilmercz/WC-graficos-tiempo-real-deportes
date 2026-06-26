@@ -84,23 +84,29 @@ class PanelTercios {
                                    && (actionText && actionText.trim() !== "");
 
             // Si el interruptor está apagado, ocultamos inmediatamente
-            if (!mostrarManual) {
-                if (this.container.classList.contains('visible')) {
-                    this.hideAction();
-                }
-                this.lastMostrarManual = false;
-                return;
-            }
+            // if (!mostrarManual) {
+            //     if (this.container.classList.contains('visible')) {
+            //         this.hideAction();
+            //     }
+            //     this.lastMostrarManual = false;
+            //     return;
+            // }
 
             // 2. Disparar solo si se acaba de activar el switch O si llega contenido nuevo estando activado
-            if (justoActivado || contenidoNuevo) {
-                console.log(`📢 PanelTercios: Ejecutando acción - "${actionText}"`);
+            if (mostrarManual && (justoActivado || contenidoNuevo)) {
+                console.log(`📢 PanelTercios: Ejecutando acción - "${actionText}" (justoActivado: ${justoActivado}, contenidoNuevo: ${contenidoNuevo})`);
                 this.lastActionText = actionText;
                 this.lastActionTimestamp = actionTimestamp;
                 this.showAction(actionText, audioUrl);
             }
 
             this.lastMostrarManual = mostrarManual;
+
+            // Si el interruptor se apaga, nos aseguramos de ocultar el panel.
+            if (!mostrarManual && this.container.classList.contains('visible')) {
+                console.log('📢 PanelTercios: Interruptor apagado, ocultando panel.');
+                this.hideAction();
+            }
         });
     }
 

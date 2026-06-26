@@ -21,7 +21,7 @@ class PanelResumenFinal {
         this.partidoRef = this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL');
         this.isVisible = false;
         this.hideTimeout = null;
-        this.displayDuration = 18000; // 18 segundos de visibilidad
+        this.displayDuration = 16000; // 16 segundos de visibilidad
         
         console.log('🏆 PanelResumenFinal: Inicializando...');
     }
