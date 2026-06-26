@@ -122,6 +122,9 @@ class PanelMarcador {
      */
     updateEstadoTiempo(data) {
         const estadoEl = document.getElementById('marcador-estado');
+        // Primero, nos aseguramos de que no tenga la clase 'finalizado' por defecto.
+        estadoEl.classList.remove('finalizado');
+
         const numeroDeTiempo = data.NumeroDeTiempo;
 
         // Validar si está en pausa según el motor nuevo
@@ -160,6 +163,8 @@ class PanelMarcador {
 
             case '4T':
                 estadoEl.textContent = 'FINALIZADO';
+                // Cuando el partido finaliza (4T), añadimos la clase para que el CSS la ponga en rojo.
+                estadoEl.classList.add('finalizado');
                 this.stopTimer();
                 break;
 

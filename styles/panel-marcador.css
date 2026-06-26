@@ -36,6 +36,12 @@
     white-space: nowrap;
 }
 
+/* Estado dinámico para cuando el partido ha finalizado */
+.marcador-estado.finalizado {
+    background-color: #b30000; /* Rojo oscuro para indicar finalización */
+    color: #ffffff;
+}
+
 /* Cuerpo */
 .marcador-body {
     display: flex;
