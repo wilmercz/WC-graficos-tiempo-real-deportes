@@ -36,6 +36,8 @@
     font-size: 24px;
     color: var(--color-texto-primario);
     text-transform: uppercase;
+    gap: 10px; /* Espacio entre el indicador y el nombre */
+
     background: linear-gradient(
         to bottom,
         var(--color-primary-dark) 0%,
@@ -43,6 +45,21 @@
         var(--color-primary-dark) 100%
     );
     white-space: nowrap; /* 🛑 Asegura que el nombre nunca baje de línea */
+}
+
+/* Indicador de Desafío (Challenge) */
+.bq-challenge-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #444; /* Color por defecto (gastado/no disponible) */
+    transition: background-color 0.3s ease;
+}
+
+/* Clase para cuando un equipo está en penalización por faltas */
+.bq-challenge-indicator.en-penalizacion {
+    background-color: #FF0000; /* Rojo brillante */
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.7);
 }
 
 /* --- PUNTOS (Scores) --- */

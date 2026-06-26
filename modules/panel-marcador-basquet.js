@@ -35,7 +35,10 @@ class PanelMarcadorBasquet {
         this.container.innerHTML = `
             <div class="basquet-wrapper scaled">
                 <!-- EQUIPO 1 -->
-                <div class="bq-bloque bq-equipo" id="bq-equipo-1">EQ1</div>
+                <div class="bq-bloque bq-equipo">
+                    <div class="bq-challenge-indicator" id="bq-challenge-1"></div>
+                    <span id="bq-equipo-1">EQ1</span>
+                </div>
                 
                 <!-- SCORE 1 -->
                 <div class="bq-bloque bq-score" id="bq-score-1">0</div>
@@ -50,7 +53,10 @@ class PanelMarcadorBasquet {
                 <div class="bq-bloque bq-score" id="bq-score-2">0</div>
 
                 <!-- EQUIPO 2 -->
-                <div class="bq-bloque bq-equipo" id="bq-equipo-2">EQ2</div>
+                <div class="bq-bloque bq-equipo">
+                    <div class="bq-challenge-indicator" id="bq-challenge-2"></div>
+                    <span id="bq-equipo-2">EQ2</span>
+                </div>
             </div>
         `;
     }
@@ -89,6 +95,14 @@ class PanelMarcadorBasquet {
         // Formato 2 dígitos: 0 -> 00, 5 -> 05, 10 -> 10
         document.getElementById('bq-score-1').textContent = String(data.GOLES1 ?? 0).padStart(2, '0');
         document.getElementById('bq-score-2').textContent = String(data.GOLES2 ?? 0).padStart(2, '0');
+
+        // BANDERAS DE FALTAS (Penalización) - Leemos desde TROJAS1 y TROJAS2
+        // Acepta: true, 'true', 1, '1' como verdadero. El resto como falso.
+        const enPenalizacion1 = data.TROJAS1 == true;
+        const enPenalizacion2 = data.TROJAS2 == true;
+
+        document.getElementById('bq-challenge-1').classList.toggle('en-penalizacion', enPenalizacion1);
+        document.getElementById('bq-challenge-2').classList.toggle('en-penalizacion', enPenalizacion2);
 
         // Periodo y Cronómetro
         this.updatePeriodoYTimer(data);
