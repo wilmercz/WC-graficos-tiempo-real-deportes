@@ -51,6 +51,8 @@
     border-top: 4px solid #ff8a3d; /* Línea de contraste creativa */
     padding: 20px 45px; /* Reducido un poco más */
     border-radius: 15px;
+    position: relative; /* Necesario para el overlay de la etapa */
+    overflow: hidden; /* Para que la animación de slide no se salga */
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     transform: translateY(100px);
     opacity: 0;
@@ -65,7 +67,6 @@
     letter-spacing: 1px;
     text-shadow: 2px 4px 10px rgba(0,0,0,0.3);
 }
-
 .portada-vs {
     font-size: 16px; /* Más pequeño y discreto */
     background: #ff8a3d; /* Color de contraste solicitado */
@@ -75,7 +76,6 @@
     font-weight: bold;
     transform: skewX(-10deg);
 }
-
 .portada-score-wrapper {
     margin-top: 25px;
     font-size: 48px; /* Goles mucho más grandes */
@@ -85,6 +85,42 @@
     letter-spacing: 5px;
 }
 
+/* --- NUEVO PANEL DE ETAPA --- */
+.portada-etapa-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #ff8a3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 26px;
+    /* Padding vertical para simular la altura del texto del equipo */
+    padding: 19px 0;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    
+    /* Inicialmente oculto arriba */
+    transform: translateY(-100%);
+    /* La altura se ajustará al contenido y al padding */
+    height: auto;
+}
+
+/* Animación para alternar entre marcador y etapa */
+.portada-match-card.alternar .portada-etapa-overlay {
+    /* 
+     * La animación dura 36s en total:
+     * 0% - 1.5%: Baja el panel (0.5s)
+     * 1.5% - 15.5%: Se queda visible (5s)
+     * 15.5% - 17%: Sube el panel (0.5s)
+     * 17% - 100%: Se queda oculto, mostrando el marcador (30s)
+    */
+    animation: slideDownUp 36s infinite ease-in-out 5s; /* Empieza después de 5s */
+}
 /* Animaciones */
 @keyframes logoEntrance {
     from { transform: scale(0.5); opacity: 0; }
@@ -99,6 +135,13 @@
 @keyframes cardEntrance {
     to { transform: translateY(0); opacity: 1; }
 }
+
+@keyframes slideDownUp {
+    0%, 17%, 100% { transform: translateY(-100%); } /* Arriba (oculto) */
+    1.5%, 15.5% { transform: translateY(0%); }      /* Abajo (visible) */
+}
+
+
 
 .info-status {
     position: absolute;
