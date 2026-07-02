@@ -93,11 +93,11 @@
     width: 150%; /* Más ancho que el texto para que el ángulo funcione */
     height: 100%;
     /* Gradiente de blanco semi-transparente que forma el reflejo */
-    /* 2. La opacidad máxima se ha reducido de 0.5 a 0.25 para un efecto más sutil */
+    /* 2. La opacidad máxima se ha reducido a 0.15 para un efecto aún más sutil */
     background: linear-gradient(
         100deg,
         rgba(255, 255, 255, 0) 20%,
-        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0.15) 50%,
         rgba(255, 255, 255, 0) 80%
     );
     /* 1. Se añade un transform inicial para asegurar que esté oculto antes de la animación */
