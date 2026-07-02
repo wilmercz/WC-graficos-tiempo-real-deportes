@@ -126,6 +126,11 @@ class PanelTercios {
         linea1El.textContent = linea1 || '';
         linea2El.textContent = linea2 || '';
 
+        // Limpiar clases de animación previas
+        linea1El.classList.remove('animar-entrada', 'animar-salida');
+        linea2El.classList.remove('animar-entrada', 'animar-salida');
+        void linea1El.offsetWidth; // Forzar reflow para reiniciar animación
+
         // AJUSTE DE TAMAÑO DE FUENTE:
         // Si hay una segunda línea, aumentamos el tamaño de la primera.
         if (linea2) {
@@ -133,6 +138,12 @@ class PanelTercios {
         } else {
             linea1El.style.fontSize = ''; // Restablecer al valor por defecto del CSS (ahora 22px)
         }
+
+        // Aplicar animaciones de entrada y brillo
+        linea1El.classList.add('animar-brillo');
+        linea1El.classList.add('animar-entrada');
+        // La segunda línea solo necesita la animación de entrada
+        if (linea2) linea2El.classList.add('animar-entrada');
 
         // Reproducir audio si se proporciona una URL
         if (audioUrl) {
@@ -174,7 +185,20 @@ class PanelTercios {
      * Oculta el panel de tercios.
      */
     hideAction() {
-        this.container.classList.remove('visible');
+        const linea1El = document.getElementById('tercio-linea1');
+        const linea2El = document.getElementById('tercio-linea2');
+
+        // Quitar clases de animación de entrada y brillo
+        if (linea1El) {
+            linea1El.classList.remove('animar-brillo', 'animar-entrada');
+            linea1El.classList.add('animar-salida'); // Añadir animación de salida
+        }
+        if (linea2El) {
+            linea2El.classList.remove('animar-entrada');
+            linea2El.classList.add('animar-salida'); // Añadir animación de salida
+        }
+
+        this.container.classList.remove('visible'); // Inicia la animación de salida del panel
         if (this.hideTimeout) clearTimeout(this.hideTimeout);
         
         // Opcional: Limpiar texto después de que termine la transición de salida (500ms)

@@ -74,6 +74,47 @@
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
     line-height: 1.2; /* Espacio entre líneas si hay dos */
+
+    /* NUEVO: Preparación para animación de entrada/salida */
+    opacity: 0;
+    transform: translateY(20px);
+}
+/* --- CORRECCIÓN: Animación de Brillo (Reflejo simple) --- */
+.tercio-linea.animar-brillo {
+    position: relative; /* Necesario para el pseudo-elemento del brillo */
+    overflow: hidden;   /* Oculta el brillo cuando está fuera del texto */
+}
+/* El pseudo-elemento que crea el efecto de brillo */
+.tercio-linea.animar-brillo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150%; /* Más ancho que el texto para que el ángulo funcione */
+    height: 100%;
+    /* Gradiente de blanco semi-transparente que forma el reflejo */
+    /* 2. La opacidad máxima se ha reducido de 0.5 a 0.25 para un efecto más sutil */
+    background: linear-gradient(
+        100deg,
+        rgba(255, 255, 255, 0) 20%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0) 80%
+    );
+    /* 1. Se añade un transform inicial para asegurar que esté oculto antes de la animación */
+    transform: translateX(-100%);
+    /* La animación dura 1.5s, empieza a los 4s, y se ejecuta 1 sola vez */
+    animation: shine-effect 1.5s ease-in-out 4s 1;
+    animation-fill-mode: forwards; /* Mantiene el estado final (fuera de pantalla) */
+}
+
+/* --- NUEVO: Clases para animar la entrada y salida del texto --- */
+.tercio-linea.animar-entrada {
+    /* La animación dura 0.4s, empieza tras 0.2s (para que entre después del panel) */
+    animation: textSlideIn 0.4s forwards ease-out 0.2s;
+}
+.tercio-linea.animar-salida {
+    /* La animación de salida es más rápida */
+    animation: textSlideOut 0.3s forwards ease-in;
 }
 
 /* Estilo específico para la segunda línea */
@@ -82,4 +123,36 @@
     font-weight: normal; /* Menos énfasis */
     text-transform: none; /* Capitalización normal */
     letter-spacing: 0.5px;
+}
+
+/* Keyframe para la animación de brillo */
+@keyframes shine-effect {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* --- NUEVO: Keyframes para la animación del texto --- */
+@keyframes textSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@keyframes textSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 }
