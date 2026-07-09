@@ -36,6 +36,14 @@
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); /* Ayuda a que resalte sobre el video */
 }
 
+/* NUEVO: Estilo para el logo de video */
+.logo-video {
+    max-height: 65px;   /* Misma altura que las imágenes */
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+
 .logo-emoji {
     font-size: 50px;
 }

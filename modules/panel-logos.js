@@ -6,6 +6,12 @@ class PanelLogos {
         this.validLogos = [];
         this.rotationInterval = null;
         this.isRotating = false;
+
+        // Estado para la lógica de visibilidad y video
+        this.videoConfig = {
+            activo: false,
+            url: null
+        };
         this.partidoPanelLogos = true;
 
         // Config fija (sin depender de Firebase externo)
@@ -51,6 +57,19 @@ class PanelLogos {
             console.log(`🎨 ${this.validLogos.length} logos listos`);
 
             this.updateLogos();
+        });
+
+        // 🔥 ESCUCHAR CONFIGURACIÓN DE VIDEO LOGO
+        this.db.ref('/CONFIGURACION_OVERLAYWEB/LOGOS').on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            this.videoConfig.activo = data.Activar_Video_Logo === true || data.Activar_Video_Logo === 'true';
+            this.videoConfig.url = data.url_VideoLogo;
+
+            console.log(`📹 Configuración Video Logo:`, this.videoConfig);
+            // No es necesario llamar a updateLogos aquí, ya que la visibilidad principal
+            // y la lista de logos de imagen lo harán. Si solo cambia la config de video,
+            // el siguiente tick de los otros listeners lo recogerá.
+            this.updateLogos(); // Llamamos para re-evaluar inmediatamente.
         });
 
         // 🔥 VISIBILIDAD DESDE PARTIDO

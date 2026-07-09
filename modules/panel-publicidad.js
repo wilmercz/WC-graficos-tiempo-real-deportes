@@ -232,6 +232,22 @@ class PanelPublicidad {
             this.panel.appendChild(video);
             video.src = contenido;
             video.load();
+        } else if (tipo === 'html') {
+            // NUEVO: Soporte para contenido HTML
+            const iframe = document.createElement('iframe');
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.scrolling = 'no';
+
+            // Inyectamos el código HTML en el iframe.
+            // srcdoc es la forma segura y estándar de hacer esto.
+            iframe.srcdoc = contenido;
+            this.panel.appendChild(iframe);
+
+            const duracionMs = duracion ? duracion * 1000 : 25000;
+            console.log(`📄 Contenido HTML cargado. Mostrando por ${duracionMs / 1000}s.`);
+            mostrarPanelYProgramarSalida(duracionMs);
         } else {
             console.warn(`Tipo de contenido no soportado: "${tipo}". Saltando.`);
             setTimeout(() => this.mostrarSiguiente(), 50);

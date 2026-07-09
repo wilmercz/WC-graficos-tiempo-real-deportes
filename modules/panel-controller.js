@@ -15,6 +15,9 @@ class PanelController {
         this.currentPanel = null;
         this.panels = {};
         this.isTransitioning = false;
+
+        // Referencia para el nuevo modo de publicidad en video
+        this.videoAdRef = this.configManager.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL/MOSTRAR_PUBLICIDAD_VIDEOS');
         
         console.log('🎛️ PanelController: Inicializando...');
     }
@@ -39,6 +42,9 @@ class PanelController {
         // Ocultar todos los paneles inicialmente
         this.hideAllPanels(false); // Sin animación
 
+        // Escuchar el nuevo interruptor maestro para publicidad en video
+        this.listenForVideoAdMode();
+
         // Escuchar cambios de PANEL_ACTIVO
         this.configManager.onUpdate((config) => {
             // Si el panel es uno de los autónomos, ignoramos el control central
@@ -57,6 +63,25 @@ class PanelController {
         }
 
         console.log('✅ PanelController: Inicializado');
+    }
+
+    /**
+     * NUEVO: Escucha el interruptor para el modo de publicidad en video.
+     * Este modo oculta TODOS los gráficos para mostrar videos a pantalla completa.
+     */
+    listenForVideoAdMode() {
+        this.videoAdRef.on('value', (snapshot) => {
+            const isVideoAdModeActive = snapshot.val() === true;
+            
+            if (isVideoAdModeActive) {
+                console.warn('🎬 MODO PUBLICIDAD VIDEO: ACTIVADO. Ocultando todos los paneles.');
+                document.body.classList.add('video-ad-mode-active');
+            } else {
+                console.warn('🎬 MODO PUBLICIDAD VIDEO: DESACTIVADO. Restaurando paneles.');
+                document.body.classList.remove('video-ad-mode-active');
+            }
+        });
+        console.log('✅ PanelController: Escuchando modo de publicidad en video.');
     }
 
     /**

@@ -167,3 +167,28 @@ body {
     max-height: 80vh; /* Evitar que se salga del alto */
     object-fit: contain;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODO PUBLICIDAD EN VIDEO (Ocultación Global)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 
+ * Cuando el body tiene esta clase, todos los paneles se ocultan con una transición suave.
+ * Esto permite mostrar videos a pantalla completa sin interferencias.
+ */
+body.video-ad-mode-active #overlay-container > * {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.4s ease, visibility 0.4s ease !important;
+}
+
+/* 
+ * Excepción: El panel de portada (cortina) no debe ser afectado por este modo,
+ * ya que tiene su propio propósito de pantalla completa.
+ */
+body.video-ad-mode-active #panel-portada {
+    opacity: initial !important;
+    visibility: initial !important;
+    pointer-events: initial !important;
+}
