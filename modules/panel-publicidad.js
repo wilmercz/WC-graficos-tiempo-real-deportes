@@ -209,8 +209,8 @@ class PanelPublicidad {
 
             video.onloadedmetadata = () => {
                 const duracionVideo = video.duration;
-                // Prioridad: 1. Duración de Kotlin, 2. Duración del video, 3. Fallback a 25s.
-                const duracionMs = duracion ? duracion * 1000 
+                // Prioridad: 1. Duración de Kotlin (si es > 0), 2. Duración del video, 3. Fallback a 25s.
+                const duracionMs = (duracion && duracion > 0) ? duracion * 1000 
                                  : (duracionVideo && isFinite(duracionVideo)) ? duracionVideo * 1000 
                                  : 25000;
 
