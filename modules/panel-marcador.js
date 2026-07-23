@@ -87,9 +87,10 @@ class PanelMarcador {
             // VALIDACIÓN DE VISIBILIDAD (FUTBOL)
             const mostrarMarcador = data.MARCADOR_FUTBOL === true || data.MARCADOR_FUTBOL === 'true';
             const mostrarPenales = data.MARCADOR_PENALES === true || data.MARCADOR_PENALES === 'true';
+            const mostrarBasquet = data.MARCADOR_BASQUET === true || data.MARCADOR_BASQUET === 'true';
 
-            // REGLA: Mostrar si la bandera está activa Y NO hay penales activos (Penales tiene prioridad visual)
-            if (mostrarMarcador && !mostrarPenales) {
+            // REGLA: Mostrar si la bandera está activa Y NO hay otros marcadores con prioridad (penales, básquet)
+            if (mostrarMarcador && !mostrarPenales && !mostrarBasquet) {
                 this.container.style.display = 'block';
             } else {
                 this.container.style.display = 'none';
