@@ -73,10 +73,13 @@ class PanelMarcadorBasquet {
             if (!data) return;
 
             this.currentData = data;
-            // 1. VERIFICAR VISIBILIDAD SEGÚN LA BANDERA 'MARCADOR_BASQUET'
+
+            // REGLA MEJORADA: El panel solo será visible si su interruptor está activo
+            // Y el deporte seleccionado es explícitamente "BASQUET".
+            const deporteActual = data.DEPORTE;
             const mostrarBasquet = data.MARCADOR_BASQUET === true || data.MARCADOR_BASQUET === 'true';
             
-            if (mostrarBasquet) {
+            if (mostrarBasquet && deporteActual === 'BASQUET') {
                 this.container.style.display = 'block';
                 this.updateVisuals(data);
             } else {
