@@ -85,12 +85,14 @@ class PanelMarcador {
             console.log(`⚽ MARCADOR UPDATE: ${data.EQUIPO1} (${data.GOLES1}) - (${data.GOLES2}) ${data.EQUIPO2}`);
 
             // VALIDACIÓN DE VISIBILIDAD (FUTBOL)
+            const deporteActual = data.DEPORTE || "FUTBOL"; // Asumir FUTBOL por defecto si no existe
             const mostrarMarcador = data.MARCADOR_FUTBOL === true || data.MARCADOR_FUTBOL === 'true';
             const mostrarPenales = data.MARCADOR_PENALES === true || data.MARCADOR_PENALES === 'true';
-            const mostrarBasquet = data.MARCADOR_BASQUET === true || data.MARCADOR_BASQUET === 'true';
 
-            // REGLA: Mostrar si la bandera está activa Y NO hay otros marcadores con prioridad (penales, básquet)
-            if (mostrarMarcador && !mostrarPenales && !mostrarBasquet) {
+            // REGLA MEJORADA: Mostrar si la bandera está activa, el deporte es FUTBOL
+            // y no hay un panel con mayor prioridad (penales).
+            // Esto evita que se oculte si el marcador de básquet quedó encendido por error.
+            if (mostrarMarcador && deporteActual === "FUTBOL" && !mostrarPenales) {
                 this.container.style.display = 'block';
             } else {
                 this.container.style.display = 'none';
