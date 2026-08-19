@@ -14,7 +14,7 @@ export class WebRTCManager {
         this.isConnected = false;
         this.isManualMode = false; // ✅ Identifica si el modo manual tiene el control
         this._processedCandidates = new Set();  // ✅ Evita procesar IPs duplicadas
-        this.pendingCandidates = []; // ✅ Sala de espera para IPs de Android
+        this.pendingCandidates = []; // ✅ Sala de espera para IPs de Android (Ya no se usa en modo automático)
 
         // Rutas de Firebase para la Señalización (Signaling)
         this.SIGNALING_PATH = 'ARKI_DEPORTES/WEBRTC';
@@ -114,10 +114,6 @@ export class WebRTCManager {
                 try { offer = JSON.parse(rawOffer); } catch(e) { console.error('Error parseando OFERTA', e); }
             }
             
-            // Extraer si viene anidado (ej. Kotlin manda { offer: { type: 'offer', sdp: '...' } })
-            if (offer && offer.offer) offer = offer.offer;
-            if (offer && offer.OFERTA) offer = offer.OFERTA;
-
             // Android WebRTC a veces usa "description" en lugar de "sdp"
             if (offer && offer.description && !offer.sdp) offer.sdp = offer.description;
             if (offer && typeof offer.type === 'string') offer.type = offer.type.toLowerCase();
@@ -147,36 +143,9 @@ export class WebRTCManager {
             }
         };
 
-        // Asignar el mismo procesador a ambas rutas
-        fb.onDataChange(`${this.SIGNALING_PATH}/OFERTA`, (data) => processOffer(data, true));
-        fb.onDataChange(`${this.SIGNALING_PATH}/offer`, (data) => processOffer(data, false));
-
-        // 2. Escuchar los "CANDIDATOS" (Rutas de red/IPs) de Kotlin (Ajustado al español)
-        fb.onDataChange(`${this.SIGNALING_PATH}/CANDIDATOS/android`, (candidatesData) => {
-            if (!candidatesData) return; // ❌ Eliminamos el bloqueo de peerConnection
-            
-            // 🤖 SEMI-AUTOMÁTICO: Guardar candidatos y actualizar la caja de texto
-            window.lastAndroidCandidates = candidatesData;
-
-            const manualPanel = document.getElementById('webrtc-manual-panel');
-            if (manualPanel && manualPanel.style.display !== 'none') {
-                return; // 🛑 En modo semi-automático, no procesar candidatos en segundo plano
-            }
-
-            Object.entries(candidatesData).forEach(([id, candidate]) => {
-                if (this._processedCandidates.has(id)) return;  // Ya fue procesado, ignorar
-                this._processedCandidates.add(id);
-                
-                // 🛡️ SALA DE ESPERA: Si la oferta aún no se termina de procesar, guardar IP
-                if (!this.peerConnection || !this.peerConnection.remoteDescription) {
-                    console.log('⏳ Guardando candidato de Android en sala de espera...');
-                    this.pendingCandidates.push(candidate);
-                } else {
-                    this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
-                        .catch(e => console.error('🎥 Error añadiendo ICE candidate:', e));
-                }
-            });
-        });
+        // Asignar el mismo procesador a ambas rutas (manual y automática)
+        fb.ref(`${this.SIGNALING_PATH}/OFERTA`).on('value', (snapshot) => processOffer(snapshot.val(), true));
+        fb.ref(`${this.SIGNALING_PATH}/offer`).on('value', (snapshot) => processOffer(snapshot.val(), false));
     }
 
     /**
@@ -268,7 +237,7 @@ export class WebRTCManager {
                 
                 // 🛡️ SEGURO AUTOMÁTICO: Apagar el interruptor en Firebase si se cae el WiFi
                 if (this.app?.modules?.firebaseClient) {
-                    this.app.modules.firebaseClient.writeData('ARKI_DEPORTES/PARTIDOACTUAL/Mostrar_EnVivo', false);
+                    this.app.modules.firebaseClient.ref('ARKI_DEPORTES/PARTIDOACTUAL/Mostrar_EnVivo').set(false);
                 }
             }
         };
@@ -287,7 +256,7 @@ export class WebRTCManager {
                     type: localDesc.type,
                     sdp: localDesc.sdp
                 };
-                this.app.modules.firebaseClient.writeData(`${this.SIGNALING_PATH}/answer`, answerObject);
+                this.app.modules.firebaseClient.ref(`${this.SIGNALING_PATH}/answer`).set(answerObject);
             }
         };
 
@@ -297,6 +266,7 @@ export class WebRTCManager {
         // Crear nuestra respuesta (Answer)
         const answer = await this.peerConnection.createAnswer();
         await this.peerConnection.setLocalDescription(answer);
+
     }
 
     /**
@@ -415,7 +385,7 @@ export class WebRTCManager {
                 
                 // Actualizar en Firebase para apagar el interruptor
                 if (this.app.modules.firebaseClient) {
-                    this.app.modules.firebaseClient.writeData('ARKI_DEPORTES/PARTIDOACTUAL/Mostrar_WebRTCManual', false);
+                    this.app.modules.firebaseClient.ref('ARKI_DEPORTES/PARTIDOACTUAL/Mostrar_WebRTCManual').set(false);
                 }
             };
         }
@@ -479,7 +449,7 @@ export class WebRTCManager {
             // 2. Enviar automáticamente a Firebase
             if (this.app.modules.firebaseClient) {
                 console.log("🚀 [MANUAL] Enviando Respuesta Completa a Firebase automáticamente...");
-                this.app.modules.firebaseClient.writeData(`${this.SIGNALING_PATH}/RESPUESTA`, JSON.stringify(answerJson));
+                this.app.modules.firebaseClient.ref(`${this.SIGNALING_PATH}/RESPUESTA`).set(JSON.stringify(answerJson));
             }
         };
 

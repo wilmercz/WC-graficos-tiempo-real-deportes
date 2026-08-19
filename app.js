@@ -23,6 +23,7 @@ import PanelTablaPosiciones from './modules/panel-tabla-posiciones.js';
 import PanelComparativa from './modules/panel-comparativa.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
 import PanelResumenFinal from './modules/panel-resumen-final.js';
+import { WebRTCManager } from './modules/webrtc-manager.js'; // 💡 1. IMPORTAR EL MÓDULO
 import PanelRedes from './modules/panel-redes.js';
 
 // 2. CONFIGURACIÓN DE FIREBASE
@@ -145,6 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Audio Manager (Música de fondo / Cortinas)
     const audioManager = new AudioManager(db);
     audioManager.initialize();
+
+    // WebRTC Manager (para video en vivo desde Kotlin)
+    const webRTCManager = new WebRTCManager({ modules: { firebaseClient: configManager.db } }); // 💡 2. INICIALIZARLO
+    webRTCManager.init();
 
     // --- Debugging Global (Opcional) ---
     window.appManagers = {
