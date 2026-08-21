@@ -18,12 +18,18 @@ export class WebRTCManager {
 
         // Rutas de Firebase para la Señalización (Signaling)
         this.SIGNALING_PATH = 'ARKI_DEPORTES/WEBRTC';
+        this.PARTIDO_PATH = 'ARKI_DEPORTES/PARTIDOACTUAL';
+
+        // 🔌 TRUCO DE CONEXIÓN: usamos "Mostrar_Redes" como bandera de que
+        // la app Kotlin ya está conectada (independiente del estado real del RTCPeerConnection)
+        this.hayConexionRedes = false;
     }
 
     init() {
         console.log('🎥 Inicializando WebRTC Manager...');
         this.createDOMElement();
         this.setupFirebaseSignaling();
+        this.setupVisibilityListener(); // 📡 Escuchar Mostrar_EnVivo / Mostrar_Redes
         this.setupManualTesting(); // 🛠️ MANUAL: Inicializar el panel de pruebas
     }
 
@@ -149,6 +155,32 @@ export class WebRTCManager {
     }
 
     /**
+     * 📡 Escuchar en Firebase los dos campos que controlan la visibilidad real:
+     *  - Mostrar_EnVivo: el usuario/operador pide mostrar el reproductor.
+     *  - Mostrar_Redes: TRUCO usado para saber que ya existe conexión real con la app Kotlin.
+     *
+     * El reproductor solo se muestra si AMBAS condiciones son verdaderas.
+     */
+    setupVisibilityListener() {
+        if (!this.app.modules.firebaseClient) {
+            console.error('🎥 Error: FirebaseClient no está disponible para el control de visibilidad');
+            return;
+        }
+
+        const fb = this.app.modules.firebaseClient;
+
+        fb.ref(this.PARTIDO_PATH).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const mostrarEnVivo = data.Mostrar_EnVivo === true || data.Mostrar_EnVivo === 'true';
+            const hayConexion = data.Mostrar_Redes === true || data.Mostrar_Redes === 'true';
+
+            this.handleCommand(mostrarEnVivo, hayConexion);
+        });
+    }
+
+    /**
      * Procesar la oferta y crear la respuesta
      */
     async handleOffer(offer) {
@@ -270,22 +302,22 @@ export class WebRTCManager {
     }
 
     /**
-     * Recibir comando de Firebase (Mostrar/Ocultar EnVivo y Audio)
+     * Recibir comando de Firebase (Mostrar/Ocultar EnVivo + truco de conexión vía Mostrar_Redes)
      */
-    handleCommand(mostrar, muted) {
+    handleCommand(mostrar, hayConexion) {
         if (this.isManualMode) {
             console.log('🛠️ [MANUAL] Ignorando comando de Firebase porque el modo manual está activo.');
             return;
         }
 
         this.firebaseRequestedVisible = mostrar;
-        this.firebaseRequestedMuted = muted;
-        
+        this.hayConexionRedes = hayConexion; // 🔌 Truco: Mostrar_Redes = true significa "hay conexión"
+
         if (this.videoElement) {
-            this.videoElement.muted = muted;
-            
+            this.videoElement.muted = this.firebaseRequestedMuted;
+
             // 🛡️ RECOVERY EXTREMO: Si CameraFi/Chrome apaga el video al intentar ponerle sonido
-            if (mostrar) {
+            if (mostrar && hayConexion) {
                 const playPromise = this.videoElement.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(e => {
@@ -305,8 +337,9 @@ export class WebRTCManager {
      * EL DOBLE SEGURO: Evalúa si debe mostrar la capa basándose en Firebase Y la red
      */
     evaluateVisibility() {
-        // Solo se hace visible si Firebase lo pide Y estamos realmente conectados
-        const shouldShow = this.firebaseRequestedVisible && this.isConnected;
+        // Solo se hace visible si Firebase pide mostrarlo (Mostrar_EnVivo) Y
+        // el truco de conexión (Mostrar_Redes) confirma que la app ya está conectada
+        const shouldShow = this.firebaseRequestedVisible && this.hayConexionRedes;
         this.containerElement.classList.toggle('visible', shouldShow);
     }
 
@@ -398,6 +431,7 @@ export class WebRTCManager {
         this.isManualMode = true;
         this.firebaseRequestedVisible = true;
         this.isConnected = true;
+        this.hayConexionRedes = true; // 🔌 En pruebas manuales forzamos también el "truco" de conexión
         this.evaluateVisibility();
 
         // 🚀 Activar controles temporales en la pantalla grande para facilitar pruebas
