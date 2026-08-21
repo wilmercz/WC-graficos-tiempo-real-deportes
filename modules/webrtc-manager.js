@@ -19,17 +19,13 @@ export class WebRTCManager {
         // Rutas de Firebase para la Señalización (Signaling)
         this.SIGNALING_PATH = 'ARKI_DEPORTES/WEBRTC';
         this.PARTIDO_PATH = 'ARKI_DEPORTES/PARTIDOACTUAL';
-
-        // 🔌 TRUCO DE CONEXIÓN: usamos "Mostrar_Redes" como bandera de que
-        // la app Kotlin ya está conectada (independiente del estado real del RTCPeerConnection)
-        this.hayConexionRedes = false;
     }
 
     init() {
         console.log('🎥 Inicializando WebRTC Manager...');
         this.createDOMElement();
         this.setupFirebaseSignaling();
-        this.setupVisibilityListener(); // 📡 Escuchar Mostrar_EnVivo / Mostrar_Redes
+        this.setupVisibilityListener(); // 📡 Escuchar Mostrar_EnVivo
         this.setupManualTesting(); // 🛠️ MANUAL: Inicializar el panel de pruebas
     }
 
@@ -155,11 +151,10 @@ export class WebRTCManager {
     }
 
     /**
-     * 📡 Escuchar en Firebase los dos campos que controlan la visibilidad real:
-     *  - Mostrar_EnVivo: el usuario/operador pide mostrar el reproductor.
-     *  - Mostrar_Redes: TRUCO usado para saber que ya existe conexión real con la app Kotlin.
-     *
-     * El reproductor solo se muestra si AMBAS condiciones son verdaderas.
+     * 📡 Escuchar en Firebase el campo que controla la visibilidad:
+     *  - Mostrar_EnVivo: el operador pide mostrar el reproductor.
+     * Se combina con el estado REAL de conexión (this.isConnected, que viene
+     * directo de onconnectionstatechange) dentro de evaluateVisibility().
      */
     setupVisibilityListener() {
         if (!this.app.modules.firebaseClient) {
@@ -174,9 +169,11 @@ export class WebRTCManager {
             if (!data) return;
 
             const mostrarEnVivo = data.Mostrar_EnVivo === true || data.Mostrar_EnVivo === 'true';
-            const hayConexion = data.Mostrar_Redes === true || data.Mostrar_Redes === 'true';
+            const muted = data.EnVivo_Muted !== undefined
+                ? (data.EnVivo_Muted === true || data.EnVivo_Muted === 'true')
+                : true; // Por defecto silenciado si no existe el campo
 
-            this.handleCommand(mostrarEnVivo, hayConexion);
+            this.handleCommand(mostrarEnVivo, muted);
         });
     }
 
@@ -256,11 +253,14 @@ export class WebRTCManager {
             this.isConnected = (state === 'connected');
             this.evaluateVisibility(); // Re-evaluar si podemos mostrar la imagen
             
-            // 🌟 Mostrar animación de éxito "Joven Sucumbios"
-            // DESACTIVADO TEMPORALMENTE
-            // if (justConnected) {
-            //     this.showConnectionBadge();
-            // }
+            // 🌟 TRUCO: avisar al operador que ya hay conexión, activando el
+            // panel de Redes ("SÍGUENOS") que ya sabe mostrarse y ocultarse solo
+            if (justConnected) {
+                if (this.app?.modules?.firebaseClient) {
+                    console.log('📢 Conexión establecida: activando Mostrar_Redes como aviso visual');
+                    this.app.modules.firebaseClient.ref(`${this.PARTIDO_PATH}/Mostrar_Redes`).set(true);
+                }
+            }
             
             // 🧹 Limpieza automática si el celular se desconecta o se apaga la pantalla
             if (state === 'disconnected' || state === 'failed') {
@@ -302,22 +302,22 @@ export class WebRTCManager {
     }
 
     /**
-     * Recibir comando de Firebase (Mostrar/Ocultar EnVivo + truco de conexión vía Mostrar_Redes)
+     * Recibir comando de Firebase (Mostrar/Ocultar EnVivo y Audio)
      */
-    handleCommand(mostrar, hayConexion) {
+    handleCommand(mostrar, muted) {
         if (this.isManualMode) {
             console.log('🛠️ [MANUAL] Ignorando comando de Firebase porque el modo manual está activo.');
             return;
         }
 
         this.firebaseRequestedVisible = mostrar;
-        this.hayConexionRedes = hayConexion; // 🔌 Truco: Mostrar_Redes = true significa "hay conexión"
+        this.firebaseRequestedMuted = muted;
 
         if (this.videoElement) {
-            this.videoElement.muted = this.firebaseRequestedMuted;
+            this.videoElement.muted = muted;
 
             // 🛡️ RECOVERY EXTREMO: Si CameraFi/Chrome apaga el video al intentar ponerle sonido
-            if (mostrar && hayConexion) {
+            if (mostrar) {
                 const playPromise = this.videoElement.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(e => {
@@ -337,54 +337,10 @@ export class WebRTCManager {
      * EL DOBLE SEGURO: Evalúa si debe mostrar la capa basándose en Firebase Y la red
      */
     evaluateVisibility() {
-        // Solo se hace visible si Firebase pide mostrarlo (Mostrar_EnVivo) Y
-        // el truco de conexión (Mostrar_Redes) confirma que la app ya está conectada
-        const shouldShow = this.firebaseRequestedVisible && this.hayConexionRedes;
+        // Solo se hace visible si Firebase lo pide Y estamos REALMENTE conectados
+        // (this.isConnected viene directo de onconnectionstatechange, no de un campo aparte)
+        const shouldShow = this.firebaseRequestedVisible && this.isConnected;
         this.containerElement.classList.toggle('visible', shouldShow);
-    }
-
-    /**
-     * 🌟 Mostrar notificación de conexión WebRTC exitosa
-     */
-    showConnectionBadge() {
-        let badge = document.getElementById('webrtc-connection-badge');
-        if (!badge) {
-            badge = document.createElement('div');
-            badge.id = 'webrtc-connection-badge';
-            
-            const circle = document.createElement('div');
-            circle.className = 'circle-logo';
-            
-            const img = document.createElement('img');
-            circle.appendChild(img);
-            
-            const text = document.createElement('span');
-            text.className = 'badge-text';
-            text.innerText = 'Joven Sucumbios'; // Texto solicitado
-            
-            badge.appendChild(circle);
-            badge.appendChild(text);
-            document.body.appendChild(badge);
-        }
-        
-        // Obtener el logo actual del DOM (el que ya se descargó en el main)
-        const img = badge.querySelector('img');
-        if (img) {
-            const currentLogoUrl = window.lastFirebaseData?.urlLogo || document.getElementById('logo')?.src;
-            if (currentLogoUrl) img.src = currentLogoUrl;
-        }
-        
-        // Reiniciar animación y forzar reflow
-        badge.classList.remove('show');
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => badge.classList.add('show'));
-        });
-        
-        // Desaparecer automáticamente a los 7 segundos
-        if (this._badgeTimer) clearTimeout(this._badgeTimer);
-        this._badgeTimer = setTimeout(() => {
-            if (badge) badge.classList.remove('show');
-        }, 7000);
     }
 
     // =======================================================================
@@ -431,7 +387,6 @@ export class WebRTCManager {
         this.isManualMode = true;
         this.firebaseRequestedVisible = true;
         this.isConnected = true;
-        this.hayConexionRedes = true; // 🔌 En pruebas manuales forzamos también el "truco" de conexión
         this.evaluateVisibility();
 
         // 🚀 Activar controles temporales en la pantalla grande para facilitar pruebas

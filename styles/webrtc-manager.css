@@ -7,7 +7,7 @@
  * Ocupa toda la pantalla y se posiciona por DEBAJO del resto de
  * paneles/gráficos (#overlay-container tiene z-index: 2).
  * Solo se vuelve visible cuando webrtc-manager.js le agrega la clase
- * ".visible" (Mostrar_EnVivo = true Y Mostrar_Redes = true en Firebase).
+ * ".visible" (Mostrar_EnVivo = true Y conexión WebRTC real establecida).
  */
 #grafico-envivo {
   position: fixed;
