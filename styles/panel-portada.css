@@ -34,7 +34,7 @@
 
 /* Logo animado */
 .portada-logo {
-    max-width: 180px; /* Reducido para mayor elegancia */
+    max-width: 100px; /* Reducido un poco (antes 180px) para dar espacio a los escudos */
     margin-bottom: 60px; /* Más espacio respecto a los equipos */
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
     animation: logoEntrance 1.2s cubic-bezier(0.17, 0.67, 0.83, 0.67), logoPulse 4s infinite ease-in-out 1.2s;
@@ -57,6 +57,28 @@
     transform: translateY(100px);
     opacity: 0;
     animation: cardEntrance 0.8s forwards 0.5s;
+}
+
+/* Bloque equipo (escudo + nombre), reemplaza el div suelto de antes */
+.portada-team-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Escudo del equipo: oculto por defecto, solo se muestra si hay URL válida en Firebase */
+.portada-escudo {
+    display: none;
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
+    animation: escudoEntrance 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+.portada-escudo.visible {
+    display: block;
 }
 
 .portada-team {
@@ -88,7 +110,7 @@
 /* --- NUEVO PANEL DE ETAPA --- */
 .portada-etapa-overlay {
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 0;
     width: 100%;
     background: #ff8a3d;
@@ -97,16 +119,14 @@
     justify-content: center;
     color: white;
     font-size: 26px;
-    /* Padding vertical para simular la altura del texto del equipo */
     padding: 19px 0;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 2px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
     
-    /* Inicialmente oculto arriba */
-    transform: translateY(-100%);
-    /* La altura se ajustará al contenido y al padding */
+    /* Inicialmente oculto abajo */
+    transform: translateY(100%);
     height: auto;
 }
 
@@ -137,11 +157,14 @@
 }
 
 @keyframes slideDownUp {
-    0%, 17%, 100% { transform: translateY(-100%); } /* Arriba (oculto) */
-    1.5%, 15.5% { transform: translateY(0%); }      /* Abajo (visible) */
+    0%, 17%, 100% { transform: translateY(100%); } /* Abajo (oculto) */
+    1.5%, 15.5% { transform: translateY(0%); }      /* Visible */
 }
 
-
+@keyframes escudoEntrance {
+    from { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
 
 .info-status {
     position: absolute;

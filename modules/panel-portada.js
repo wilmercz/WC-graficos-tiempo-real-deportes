@@ -18,9 +18,17 @@ class PanelPortada {
                 <img src="${this.logoUrl}" alt="Logo Arki Deportes" class="portada-logo">
                 
                 <div class="portada-match-card">
-                    <div class="portada-team" id="portada-equipo1">EQUIPO 1</div>
+                    <div class="portada-team-block" id="portada-block1">
+                        <img class="portada-escudo" id="portada-escudo1" alt="Escudo equipo 1">
+                        <div class="portada-team" id="portada-equipo1">EQUIPO 1</div>
+                    </div>
+
                     <div class="portada-vs">VS</div>
-                    <div class="portada-team" id="portada-equipo2">EQUIPO 2</div>
+
+                    <div class="portada-team-block" id="portada-block2">
+                        <img class="portada-escudo" id="portada-escudo2" alt="Escudo equipo 2">
+                        <div class="portada-team" id="portada-equipo2">EQUIPO 2</div>
+                    </div>
 
                     <!-- El nuevo overlay para la etapa -->
                     <div class="portada-etapa-overlay" id="portada-etapa-texto"></div>
@@ -40,9 +48,8 @@ class PanelPortada {
             const data = snapshot.val();
             if (!data) return;
 
-            // Control de Visibilidad
             const mostrarPortada = data.MOSTRAR_PORTADA === true || data.MOSTRAR_PORTADA === 'true';
-            
+
             if (mostrarPortada) {
                 this.updatePanel(data);
                 this.container.classList.add('visible');
@@ -52,10 +59,30 @@ class PanelPortada {
         });
     }
 
+    // Muestra u oculta el escudo de un equipo según si la URL existe y es válida
+    toggleEscudo(imgId, url) {
+        const img = document.getElementById(imgId);
+        if (!img) return;
+
+        const urlValida = typeof url === 'string' && url.trim().length > 0;
+
+        if (urlValida) {
+            img.src = url;
+            img.classList.add('visible');
+        } else {
+            img.classList.remove('visible');
+            img.removeAttribute('src');
+        }
+    }
+
     updatePanel(data) {
         // Actualizar nombres de equipos
         document.getElementById('portada-equipo1').textContent = data.EQUIPO1 || 'EQUIPO 1';
         document.getElementById('portada-equipo2').textContent = data.EQUIPO2 || 'EQUIPO 2';
+
+        // Actualizar escudos (solo si el link existe)
+        this.toggleEscudo('portada-escudo1', data.ESCUDO1_URL);
+        this.toggleEscudo('portada-escudo2', data.ESCUDO2_URL);
 
         // Actualizar goles (si aplica)
         document.getElementById('portada-goles1').textContent = data.GOLES1 ?? 0;
@@ -66,9 +93,7 @@ class PanelPortada {
         document.getElementById('portada-estado').textContent = estado;
 
         // --- LÓGICA DE LA ETAPA ---
-        const etapaValue = data.ETAPA; // Puede ser 0, 1, 2, 3, 4 o undefined
-        console.log(`[PORTADA-ETAPA] Valor leído de Firebase 'ETAPA':`, etapaValue, `(Tipo: ${typeof etapaValue})`);
-
+        const etapaValue = data.ETAPA;
         const etapaMap = {
             '0': 'Fase de Grupos',
             '1': 'Octavos de Final',
@@ -77,17 +102,14 @@ class PanelPortada {
             '4': 'Tercer Lugar'
         };
         const etapaTexto = etapaMap[etapaValue] || '';
-        console.log(`[PORTADA-ETAPA] Texto de etapa resultante: "${etapaTexto}"`);
 
         const etapaEl = document.getElementById('portada-etapa-texto');
         const matchCardEl = this.container.querySelector('.portada-match-card');
 
         etapaEl.textContent = etapaTexto;
 
-        // Activar la animación solo si hay un texto de etapa para mostrar
         const debeAlternar = !!etapaTexto;
         matchCardEl.classList.toggle('alternar', debeAlternar);
-        console.log(`[PORTADA-ETAPA] ¿Debe animar la alternancia? -> ${debeAlternar}`);
     }
 }
 
