@@ -1,0 +1,505 @@
+/* ===============================
+   PANEL TÁCTICA (CANCHA VIRTUAL)
+   =============================== */
+
+#panel-tactica {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1900; /* Debajo de la portada (2000), por encima del resto */
+    display: none;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    background: radial-gradient(circle at center, #1a3a6b 0%, #0b1c3d 100%);
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+}
+
+#panel-tactica.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.tactica-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 40px 30px;
+    box-sizing: border-box;
+}
+
+/* ---------- BARRA SUPERIOR ---------- */
+.tactica-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex: 0 0 auto;
+}
+
+.tactica-equipo-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    padding: 10px 24px;
+    min-width: 260px;
+}
+
+.equipo-der {
+    flex-direction: row-reverse;
+}
+
+.tactica-escudo {
+    display: none;
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+}
+.tactica-escudo.visible {
+    display: block;
+}
+
+.tactica-nombre {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 2px 6px rgba(0,0,0,0.4);
+}
+
+/* Agrupa el nombre y, debajo, el conteo de tarjetas (separado del marcador de goles) */
+.tactica-equipo-textos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Recuadro naranja resaltando el número de goles, con el dígito en blanco */
+.tactica-goles-box {
+    background: linear-gradient(160deg, #ff8a3d, #ff5a3d);
+    border-radius: 10px;
+    padding: 4px 16px;
+    min-width: 30px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(255, 138, 61, 0.4);
+}
+
+.tactica-goles {
+    font-size: 26px;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.35);
+}
+
+.tactica-central-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.tactica-campeonato {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    /* Si no hay campeonato cargado, no ocupa espacio extra */
+    min-height: 1em;
+}
+
+.tactica-estado-central {
+    flex: 0 0 auto;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 30px;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
+.tactica-estado-central.entretiempo { color: #ffd166; }
+.tactica-estado-central.finalizado { color: #ff5a5a; }
+.tactica-estado-central.por-jugarse { color: #d9e4ff; }
+
+/* Contador persistente de tarjetas (no desaparece, a diferencia del flash).
+   Ahora vive debajo del nombre del equipo, separado del recuadro de goles. */
+.tactica-tarjetas-persist {
+    display: none; /* se activa por JS solo si hay tarjetas que mostrar */
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.mini-tarjeta {
+    display: inline-block;
+    width: 10px;
+    height: 14px;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.mini-tarjeta.mini-amarilla { background: linear-gradient(160deg, #ffe066, #f4b400); }
+.mini-tarjeta.mini-roja { background: linear-gradient(160deg, #ff5a5a, #c81e1e); }
+
+.mini-conteo {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Tarjetas amarilla/roja junto al bloque del equipo */
+.tactica-tarjeta-flash {
+    position: absolute;
+    top: -14px;
+    width: 26px;
+    height: 36px;
+    border-radius: 4px;
+    opacity: 0;
+    transform: scale(0.4) rotate(-12deg);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+.equipo-izq .tactica-tarjeta-flash { right: -10px; }
+.equipo-der .tactica-tarjeta-flash { left: -10px; }
+
+.tactica-tarjeta-flash.tarjeta-amarilla { background: linear-gradient(160deg, #ffe066, #f4b400); }
+.tactica-tarjeta-flash.tarjeta-roja { background: linear-gradient(160deg, #ff5a5a, #c81e1e); }
+
+.tactica-tarjeta-flash.mostrar {
+    opacity: 1;
+    transform: scale(1.15) rotate(-6deg);
+    animation: tarjetaPop 3.2s ease-in-out forwards;
+}
+
+@keyframes tarjetaPop {
+    0% { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+    12% { transform: scale(1.25) rotate(-6deg); opacity: 1; }
+    20% { transform: scale(1) rotate(-6deg); opacity: 1; }
+    85% { transform: scale(1) rotate(-6deg); opacity: 1; }
+    100% { transform: scale(0.5) rotate(-6deg); opacity: 0; }
+}
+
+/* ---------- CANCHA ---------- */
+.tactica-cancha-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 18px;
+    min-height: 0;
+}
+
+.tactica-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 20px 45px rgba(0,0,0,0.4));
+}
+
+.tactica-fondo {
+    /* Fondo tipo césped, ver gradiente radial definido en el <defs> del SVG */
+}
+
+.tactica-lineas rect,
+.tactica-lineas line,
+.tactica-lineas circle {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.55);
+    stroke-width: 4;
+}
+.tactica-punto-centro {
+    fill: rgba(255, 255, 255, 0.7) !important;
+    stroke: none !important;
+}
+.tactica-arco {
+    fill: rgba(255, 255, 255, 0.55);
+    stroke: none;
+}
+
+/* Balón */
+.tactica-balon {
+    fill: #ffffff;
+    stroke: #1c1c1c;
+    stroke-width: 2;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5));
+    transition: transform 1.4s ease-in-out;
+}
+
+/* Jugadores: el <g> se mueve entero (dot + textos) */
+.tactica-jugador {
+    transition: transform 1.3s ease-in-out;
+    animation: jugadorPulso 2.8s ease-in-out infinite;
+}
+
+.tactica-dot {
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 2.5;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+}
+
+.tactica-equipo1 .tactica-dot {
+    fill: var(--tactica-team1-color, #eef4ff);
+}
+.tactica-equipo2 .tactica-dot {
+    fill: var(--tactica-team2-color, #ff8a3d);
+}
+
+@keyframes jugadorPulso {
+    0%, 100% { }
+    50% { }
+}
+/* (El pulso real se aplica solo al círculo interno para no interferir con el transform de posición del <g>) */
+.tactica-dot {
+    animation: dotPulso 2.8s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+@keyframes dotPulso {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* Número de camiseta y nombre (vacíos hasta que se conecte la alineación real) */
+.tactica-dorsal {
+    fill: #16213a;
+    font-size: 14px;
+    font-weight: 900;
+    text-anchor: middle;
+}
+.tactica-nombre-jugador {
+    fill: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    text-anchor: middle;
+    text-transform: uppercase;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.55);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+/* Festejo de gol: pequeño salto/vaivén sobre el propio jugador */
+.tactica-jugador.celebrando .tactica-dot {
+    animation: celebrarSalto 0.5s ease-in-out infinite alternate;
+}
+@keyframes celebrarSalto {
+    from { transform: translateY(0) scale(1); }
+    to   { transform: translateY(-10px) scale(1.1); }
+}
+
+/* Jugador expulsado: se queda en su banca, atenuado y con una X */
+.tactica-jugador.expulsado .tactica-dot {
+    opacity: 0.35;
+    animation: none;
+}
+.tactica-jugador.expulsado .tactica-dorsal,
+.tactica-jugador.expulsado .tactica-nombre-jugador {
+    opacity: 0.35;
+}
+.tactica-expulsado-marca {
+    fill: #ff5a5a;
+    font-size: 20px;
+    font-weight: 900;
+    text-anchor: middle;
+    opacity: 0;
+    y: 7;
+}
+.tactica-jugador.expulsado .tactica-expulsado-marca {
+    opacity: 1;
+}
+
+/* Estadio + Lugar, superpuesto sobre la parte inferior de la cancha */
+.tactica-sede {
+    display: none; /* JS lo activa a 'flex' solo si hay estadio y/o lugar */
+    position: absolute;
+    bottom: 3%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 30px;
+    padding: 8px 26px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    pointer-events: none;
+}
+.tactica-sede-sep {
+    color: #ff8a3d;
+    font-weight: 900;
+}
+
+/* Hinchada: siluetas que entran desde las esquinas al celebrar un gol */
+.tactica-hinchada {
+    position: absolute;
+    display: flex;
+    z-index: 4;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+}
+.tactica-hinchada .tactica-silueta:not(:first-child) {
+    margin-left: -12px; /* pequeño solape entre siluetas, como un grupito */
+}
+
+.esquina-tl { top: 1%; left: 1%; transform: translate(-140%, -140%); }
+.esquina-tr { top: 1%; right: 1%; transform: translate(140%, -140%); flex-direction: row-reverse; }
+.esquina-bl { bottom: 1%; left: 1%; transform: translate(-140%, 140%); }
+.esquina-br { bottom: 1%; right: 1%; transform: translate(140%, 140%); flex-direction: row-reverse; }
+
+.tactica-hinchada.mostrar {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+/* Colores por equipo, reutilizando las mismas variables que los puntos de la cancha */
+.tactica-hinchada.equipo1 { color: var(--tactica-team1-color, #eef4ff); }
+.tactica-hinchada.equipo2 { color: var(--tactica-team2-color, #ff8a3d); }
+
+.tactica-silueta {
+    width: 52px;
+    height: 78px;
+    overflow: visible;
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.55));
+    animation: siluetaSalto 0.55s ease-in-out infinite alternate;
+}
+.tactica-silueta circle,
+.tactica-silueta path {
+    fill: currentColor;
+}
+.tactica-silueta line {
+    stroke: currentColor;
+    stroke-width: 5;
+    stroke-linecap: round;
+}
+
+@keyframes siluetaSalto {
+    from { transform: translateY(0) rotate(-4deg); }
+    to   { transform: translateY(-12px) rotate(4deg); }
+}
+
+/* Flash central (¡GOOOL! / TIRO DE ESQUINA) */
+.tactica-flash-central {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    z-index: 5;
+    padding: 22px 60px;
+    border-radius: 16px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden; /* clave para que las capas no se salgan del recuadro */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+}
+
+/* Capas de color que entran deslizando (mismo efecto que panel-gol.js, con clases propias) */
+.tactica-flash-capa {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateX(-101%);
+}
+.tactica-capa-blanca { background-color: #ffffff; z-index: 1; }
+.tactica-capa-naranja { background-color: #ff6b00; z-index: 2; }
+.tactica-capa-azul { background-color: #0d2247; z-index: 3; }
+
+.tactica-flash-texto {
+    position: relative;
+    z-index: 4;
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 2px 3px 8px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.tactica-flash-central.gol .tactica-flash-texto {
+    font-size: 60px;
+}
+.tactica-flash-central.corner {
+    background: linear-gradient(135deg, #ffe066, #ffd166);
+}
+.tactica-flash-central.corner .tactica-flash-texto {
+    font-size: 34px;
+    color: #16213a;
+    text-shadow: none;
+}
+
+.tactica-flash-central.mostrar {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Al mostrarse un GOL: las capas entran en cadena y luego laten (igual que panel-gol.js) */
+.tactica-flash-central.gol.mostrar .tactica-capa-blanca {
+    animation: tacticaSlideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tactica-flash-central.gol.mostrar .tactica-capa-naranja {
+    animation: tacticaSlideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+}
+.tactica-flash-central.gol.mostrar .tactica-capa-azul {
+    animation: tacticaSlideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.2s,
+               tacticaPalpitarFondo 0.8s infinite ease-in-out 1s;
+}
+.tactica-flash-central.gol.mostrar .tactica-flash-texto {
+    animation: tacticaTextPopIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s,
+               tacticaPalpitarTexto 0.6s infinite ease-in-out 1.2s;
+}
+
+/* Para el córner (sin capas), conserva el mismo pulso simple de antes */
+.tactica-flash-central.corner.mostrar {
+    animation: flashPulso 1s ease-in-out infinite;
+}
+
+@keyframes tacticaSlideInRight {
+    from { transform: translateX(-101%); }
+    to   { transform: translateX(0%); }
+}
+@keyframes tacticaTextPopIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes tacticaPalpitarTexto {
+    0%, 100% { transform: scale(0.92); }
+    50% { transform: scale(1.18); }
+}
+@keyframes tacticaPalpitarFondo {
+    0%, 100% { background-color: #0d2247; }
+    50% { background-color: #b30000; }
+}
+@keyframes flashPulso {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.15); }
+}

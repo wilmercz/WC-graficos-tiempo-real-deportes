@@ -19,6 +19,7 @@ import PanelGol from './modules/panel-gol.js'; // <-- IMPORTANTE: Importar el nu
 import PanelTercios from './modules/panel-tercios.js';
 import PanelPublicidad from './modules/panel-publicidad.js';
 import PanelPortada from './modules/panel-portada.js';
+import PanelTactica from './modules/panel-tactica.js';
 import PanelTablaPosiciones from './modules/panel-tabla-posiciones.js';
 import PanelComparativa from './modules/panel-comparativa.js';
 import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de audio
@@ -58,6 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const panelPortada = new PanelPortada(db);
     panelPortada.initialize();
 
+    // Panel Táctica (Cancha Virtual)
+    try {
+        const panelTactica = new PanelTactica(db);
+        panelTactica.initialize();
+    } catch (error) {
+        console.error("⛔ Error fatal iniciando PanelTactica:", error);
+    }
+
+    
     // --- C. Módulos Específicos ---
     
     let panelMarcador, panelMarcadorBasquet, panelPenales, panelTercios, panelPublicidad;
