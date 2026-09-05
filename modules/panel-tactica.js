@@ -139,10 +139,6 @@ class PanelTactica {
                         <span class="tactica-flash-texto" id="tactica-flash-texto"></span>
                     </div>
 
-                    <div class="tactica-sede" id="tactica-sede">
-                        <span id="tactica-estadio"></span><span class="tactica-sede-sep" id="tactica-sede-sep"> • </span><span id="tactica-lugar"></span>
-                    </div>
-
                     <!-- Hinchada: siluetas que entran desde las esquinas al celebrar un gol -->
                     <div class="tactica-hinchada esquina-tl" id="tactica-hinchada-tl">${this.generarSiluetas(3)}</div>
                     <div class="tactica-hinchada esquina-tr" id="tactica-hinchada-tr">${this.generarSiluetas(3)}</div>
@@ -177,6 +173,20 @@ class PanelTactica {
                         ${this.generarMarkupEquipo(1)}
                         ${this.generarMarkupEquipo(2)}
                     </svg>
+                </div>
+
+                <!-- Estadio + Lugar: por debajo del límite de la cancha, no encima -->
+                <div class="tactica-sede" id="tactica-sede">
+                    <svg class="tactica-sede-icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <ellipse cx="12" cy="12" rx="10" ry="6.5" fill="none" stroke="currentColor" stroke-width="2"></ellipse>
+                        <rect x="6.5" y="9" width="11" height="6" rx="1.2" fill="currentColor"></rect>
+                    </svg>
+                    <span id="tactica-estadio"></span>
+                    <span class="tactica-sede-sep" id="tactica-sede-sep"> • </span>
+                    <svg class="tactica-sede-icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="currentColor"></path>
+                    </svg>
+                    <span id="tactica-lugar"></span>
                 </div>
             </div>
         `;
@@ -676,18 +686,18 @@ class PanelTactica {
         // 2) ¡Gol! Flash central + la hinchada entra desde las esquinas de inmediato
         this.mostrarFlashCentral('¡GOOOL!', 'gol');
         this.mostrarHinchada(numEquipoAnota);
-        await this.sleep(3000);
-        this.ocultarFlashCentral();
+        await this.sleep(1800);
 
         // 3) Festejo: se agrupan y "saltan" (clase CSS con animación de rebote),
-        //    mientras la hinchada se queda celebrando en sus esquinas
+        //    mientras el flash central y la hinchada se quedan celebrando
         const grupo = idxAtacantes.map(idx => document.getElementById(`tactica-j-t${numEquipoAnota}-${idx}`)).filter(Boolean);
         grupo.forEach(el => el.classList.add('celebrando'));
         idxAtacantes.forEach((idx, i) => {
             this.moverJugador(numEquipoAnota, idx, arcoRivalX + signo * 110, CENTRO_CANCHA.y + (i - 1.5) * 32, 900);
         });
-        await this.sleep(2200);
+        await this.sleep(3000);
         grupo.forEach(el => el.classList.remove('celebrando'));
+        this.ocultarFlashCentral();
         this.ocultarHinchada();
 
         // 4) Vuelta a la formación normal

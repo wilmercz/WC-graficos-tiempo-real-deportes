@@ -325,11 +325,13 @@
     opacity: 1;
 }
 
-/* Estadio + Lugar, superpuesto sobre la parte inferior de la cancha */
+/* Estadio + Lugar: posición absoluta contra TODA la pantalla (#panel-tactica,
+   que es position:fixed), no contra la cancha — así nunca le resta espacio
+   ni afecta su tamaño/centrado. Queda pegado bien abajo, fuera del pasto. */
 .tactica-sede {
     display: none; /* JS lo activa a 'flex' solo si hay estadio y/o lugar */
     position: absolute;
-    bottom: 3%;
+    bottom: 6px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 3;
@@ -339,9 +341,9 @@
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 30px;
-    padding: 8px 26px;
+    padding: 6px 24px;
     color: #fff;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
@@ -350,6 +352,13 @@
 .tactica-sede-sep {
     color: #ff8a3d;
     font-weight: 900;
+}
+.tactica-sede-icono {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: #ff8a3d; /* currentColor: lo toman el stroke/fill del svg */
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
 }
 
 /* Hinchada: siluetas que entran desde las esquinas al celebrar un gol */
