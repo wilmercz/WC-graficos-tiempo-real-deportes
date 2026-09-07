@@ -26,7 +26,7 @@
     gap: 40px;
     align-items: flex-start;
     justify-content: center;
-    max-width: 92vw;
+    max-width: 94vw;
 }
 
 .alineacion-tarjeta {
@@ -38,10 +38,12 @@
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
-    padding: 26px 34px;
-    width: 340px;
-    max-height: 82vh;
-    overflow-y: auto;
+    padding: 28px 40px;
+    width: min(46vw, 640px); /* ancho, no una columna angosta con scroll */
+    height: 88vh; /* fija (no max-height): así el bloque de columnas de abajo
+                     sabe exactamente cuánto espacio le queda y recorta ahí,
+                     nunca en el header ni en el cuerpo técnico */
+    overflow: hidden; /* sin scroll: lo que no entra se recorta, no se desplaza */
     font-family: Arial, Helvetica, sans-serif;
     color: #fff;
 
@@ -49,6 +51,11 @@
     transform: translateY(40px) scale(0.98);
     opacity: 0;
     transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.4s ease;
+}
+
+/* Cuando se muestra una sola tarjeta (no las dos a la vez), puede ser más ancha */
+.alineacion-tarjetas.una-tarjeta .alineacion-tarjeta {
+    width: min(70vw, 900px);
 }
 
 .alineacion-tarjeta.mostrar {
@@ -62,19 +69,21 @@
 
 .alineacion-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 14px;
     width: 100%;
-    margin-bottom: 16px;
-    padding-bottom: 14px;
-    border-bottom: 3px solid #ff8a3d;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #4a90e2;
+    flex-shrink: 0;
 }
 
 .alineacion-escudo {
     display: none;
-    width: 70px;
-    height: 70px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }
@@ -83,7 +92,7 @@
 }
 
 .alineacion-nombre-equipo {
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -91,17 +100,49 @@
     text-shadow: 1px 2px 5px rgba(0, 0, 0, 0.5);
 }
 
+/* Titulares (izquierda), logo del medio (centro) y suplentes (derecha) */
+.alineacion-columnas {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    gap: 20px;
+    flex: 1;        /* se lleva todo el espacio que sobra dentro de la tarjeta */
+    min-height: 0;  /* imprescindible para que el overflow funcione dentro de un flex item */
+    overflow: hidden; /* si titulares/suplentes no entran, se recortan aquí — nunca el header ni el cuerpo técnico */
+}
+.alineacion-columna {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Columna central angosta, solo para el logo */
+.alineacion-columna-logo {
+    flex: 0 0 auto;
+    width: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 4px;
+}
+.alineacion-logo-medio {
+    width: 100%;
+    max-height: 45px;
+    object-fit: contain;
+    opacity: 0.5;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+}
+
 .alineacion-titulo-seccion {
     width: 100%;
     text-align: center;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: 12px;
+    font-weight: 600;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #ff8a3d;
-    margin: 14px 0 6px;
+    color: #4a90e2;
+    margin: 14px 0 8px;
 }
-.alineacion-titulo-seccion:first-of-type {
+.alineacion-columna .alineacion-titulo-seccion {
     margin-top: 0;
 }
 .alineacion-titulo-supl {
@@ -109,6 +150,7 @@
 }
 .alineacion-titulo-cuerpo {
     color: #8ecae6;
+    flex-shrink: 0;
 }
 
 .alineacion-lista {
@@ -120,16 +162,26 @@
 .alineacion-lista-supl {
     opacity: 0.75;
 }
+
+/* Cuerpo técnico: fila abajo, ocupando todo el ancho de la tarjeta */
 .alineacion-lista-cuerpo {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 18px;
     opacity: 0.85;
     font-style: italic;
+    flex-shrink: 0;
+}
+.alineacion-lista-cuerpo .alineacion-fila {
+    background: none !important;
 }
 
 .alineacion-fila {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    font-size: 15px;
+    font-size: 10px;
     padding: 3px 8px;
     border-radius: 4px;
 }
@@ -138,8 +190,16 @@
 }
 .alineacion-numero {
     font-weight: 900;
-    color: #ff8a3d;
-    min-width: 24px;
+    color: rgba(0, 0, 0);
+    background: #ff8a3d;
+    min-width: 22px;
+    text-align: center;
+    padding: 1px 6px;
+    border-radius: 5px;
+}
+/* Suplentes: mismo número, fondo azul en vez de naranja */
+.alineacion-lista-supl .alineacion-numero {
+    background: #4a90e2;
 }
 .alineacion-jugador-nombre {
     text-transform: uppercase;

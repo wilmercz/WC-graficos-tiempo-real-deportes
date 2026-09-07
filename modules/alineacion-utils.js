@@ -15,6 +15,12 @@
 
 const ES_NUMERO_PURO = /^\d+$/;
 
+// Logo del medio: usado como marca de agua en la cancha (panel-tactica.js),
+// como logo permanente de la franja inferior (panel-tactica.js) y ahora
+// también en la columna central del panel de alineación (panel-alineacion.js).
+// Un solo lugar para cambiarlo si algún día es necesario.
+export const LOGO_MEDIO_URL = 'https://res.cloudinary.com/dm5jp6bbj/image/upload/v1787145107/ARKI_DEPORTES/CONFIGURACION/LOGOS_DEPORTES/logo_medio_social_1787145105202.png';
+
 /**
  * Convierte el mapa crudo de Firebase en tres listas ya ordenadas:
  * titulares, suplentes y cuerpoTecnico.

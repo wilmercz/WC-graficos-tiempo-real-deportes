@@ -1,4 +1,4 @@
-import { clasificarAlineacion } from './alineacion-utils.js';
+import { clasificarAlineacion, LOGO_MEDIO_URL } from './alineacion-utils.js';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -67,11 +67,19 @@ class PanelAlineacion {
                     <div class="alineacion-nombre-equipo" id="alineacion-nombre-${numEquipo}">EQUIPO</div>
                 </div>
 
-                <div class="alineacion-titulo-seccion">TITULARES</div>
-                <div class="alineacion-lista" id="alineacion-titulares-${numEquipo}"></div>
-
-                <div class="alineacion-titulo-seccion alineacion-titulo-supl">SUPLENTES</div>
-                <div class="alineacion-lista alineacion-lista-supl" id="alineacion-suplentes-${numEquipo}"></div>
+                <div class="alineacion-columnas">
+                    <div class="alineacion-columna">
+                        <div class="alineacion-titulo-seccion">TITULARES</div>
+                        <div class="alineacion-lista" id="alineacion-titulares-${numEquipo}"></div>
+                    </div>
+                    <div class="alineacion-columna alineacion-columna-logo">
+                        <img class="alineacion-logo-medio" src="${LOGO_MEDIO_URL}" alt="Logo del medio">
+                    </div>
+                    <div class="alineacion-columna">
+                        <div class="alineacion-titulo-seccion alineacion-titulo-supl">SUPLENTES</div>
+                        <div class="alineacion-lista alineacion-lista-supl" id="alineacion-suplentes-${numEquipo}"></div>
+                    </div>
+                </div>
 
                 <div class="alineacion-titulo-seccion alineacion-titulo-cuerpo" id="alineacion-titulo-cuerpotecnico-${numEquipo}">CUERPO TÉCNICO</div>
                 <div class="alineacion-lista alineacion-lista-cuerpo" id="alineacion-cuerpotecnico-${numEquipo}"></div>
