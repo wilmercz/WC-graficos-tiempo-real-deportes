@@ -26,6 +26,7 @@ import AudioManager from './modules/audio-manager.js'; // Tu nuevo módulo de au
 import PanelResumenFinal from './modules/panel-resumen-final.js';
 import { WebRTCManager } from './modules/webrtc-manager.js'; // 💡 1. IMPORTAR EL MÓDULO
 import PanelRedes from './modules/panel-redes.js';
+import PanelAlineacion from './modules/panel-alineacion.js';
 
 // 2. CONFIGURACIÓN DE FIREBASE
 // Inicializar Firebase
@@ -66,6 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
         console.error("⛔ Error fatal iniciando PanelTactica:", error);
     }
+
+    // Panel Alineación (pantalla completa con titulares/suplentes/cuerpo técnico)
+try {
+    const panelAlineacion = new PanelAlineacion(db);
+    panelAlineacion.initialize();
+} catch (error) {
+    console.error("⛔ Error fatal iniciando PanelAlineacion:", error);
+}
 
     
     // --- C. Módulos Específicos ---

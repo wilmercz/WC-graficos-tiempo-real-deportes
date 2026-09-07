@@ -69,7 +69,7 @@
 }
 
 .tactica-nombre {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 900;
     color: #fff;
     text-transform: uppercase;
@@ -96,7 +96,7 @@
 }
 
 .tactica-goles {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 900;
     color: #ffffff;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.35);
@@ -127,7 +127,7 @@
     border-radius: 12px;
     padding: 12px 30px;
     color: #fff;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 800;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -208,13 +208,24 @@
 }
 
 .tactica-svg {
-    width: 95%;
-    height: 95%;
+    position: absolute;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 86%;
+    height: 86%;
     filter: drop-shadow(0 20px 45px rgba(0,0,0,0.4));
 }
 
 .tactica-fondo {
     /* Fondo tipo césped, ver gradiente radial definido en el <defs> del SVG */
+}
+
+/* Logo del medio "pintado" en el gramado. Ajusta solo este número (0 a 1)
+   para probar el nivel de transparencia ideal. */
+.tactica-marca-agua {
+    opacity: 0.08;
+    pointer-events: none;
 }
 
 .tactica-lineas rect,
@@ -325,44 +336,154 @@
     opacity: 1;
 }
 
-/* Estadio + Lugar: posición absoluta contra TODA la pantalla (#panel-tactica,
+/* Franja inferior: posición absoluta contra TODA la pantalla (#panel-tactica,
    que es position:fixed), no contra la cancha — así nunca le resta espacio
-   ni afecta su tamaño/centrado. Queda pegado bien abajo, fuera del pasto. */
+   ni afecta su tamaño/centrado. Ahora es un grid de 3 columnas: logo
+   permanente | estadio/lugar | logos rotativos. Siempre visible (ya no
+   depende de que exista estadio/lugar, porque también vive el logo ahí). */
 .tactica-sede {
-    display: none; /* JS lo activa a 'flex' solo si hay estadio y/o lugar */
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
     position: absolute;
     bottom: 6px;
     left: 0;
     width: 100%;
     z-index: 3;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: 10px;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(8px);
     border-top: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 0;
-    padding: 8px 0;
+    padding: 12px 70px;
     color: #fff;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
+
+.tactica-sede-col {
+    display: flex;
+    align-items: center;
+    min-width: 0; /* permite que el texto largo trunque en vez de desbordar */
+}
+.tactica-sede-col-logo {
+    justify-content: flex-start;
+}
+.tactica-sede-col-info {
+    justify-content: center;
+    gap: 6px;
     pointer-events: none;
 }
+.tactica-sede-col-rotativos {
+    justify-content: flex-end;
+}
+
+.tactica-logo-permanente {
+    height: 34px;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
+.tactica-logo-rotativo-img {
+    display: none; /* JS lo pone en 'block' cuando hay logos */
+    height: 34px;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
 .tactica-sede-sep {
     color: #ff8a3d;
     font-weight: 900;
 }
 .tactica-sede-icono {
-    width: 15px;
-    height: 15px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
     color: #ff8a3d; /* currentColor: lo toman el stroke/fill del svg */
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
 }
 
 /* Hinchada: siluetas que entran desde las esquinas al celebrar un gol */
+/* Alineación (titulares/suplentes) a los lados de la cancha.
+   z-index: 2, por debajo de la hinchada (4) y del cintillo de sede (3) —
+   así un gol saca a la hinchada por encima de la lista sin nada especial. */
+.tactica-lista-alineacion {
+    position: absolute;
+    top: 6%;
+    bottom: 6%;
+    width: 17%;
+    max-width: 220px;
+    z-index: 2;
+    display: none; /* JS lo pone en 'flex' cuando hay datos */
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 10px 8px;
+    overflow-y: auto;
+    pointer-events: none;
+}
+.lista-izq { left: 1%; border-left: 3px solid var(--tactica-team1-color, #eef4ff); }
+.lista-der { right: 1%; border-right: 3px solid var(--tactica-team2-color, #ff8a3d); }
+
+.tactica-lista-titulo {
+    font-size: 11px;
+    font-weight: 900;
+    color: #ff8a3d;
+    letter-spacing: 1px;
+    text-align: center;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+.tactica-lista-titulo-supl {
+    margin-top: 6px;
+    color: rgba(255, 255, 255, 0.6);
+}
+.tactica-lista-titulo-cuerpo {
+    margin-top: 6px;
+    color: #8ecae6;
+}
+
+.tactica-lista-jugadores {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.tactica-lista-suplentes {
+    opacity: 0.65;
+}
+.tactica-lista-cuerpotecnico {
+    opacity: 0.75;
+    font-style: italic;
+}
+
+.tactica-lista-fila {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 10px;
+    color: #fff;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tactica-lista-numero {
+    font-weight: 400;
+    color: #ff8a3d;
+    min-width: 16px;
+}
+.tactica-lista-nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+}
+
 .tactica-hinchada {
     position: absolute;
     display: flex;
@@ -491,6 +612,40 @@
 /* Para el córner (sin capas), conserva el mismo pulso simple de antes */
 .tactica-flash-central.corner.mostrar {
     animation: flashPulso 1s ease-in-out infinite;
+}
+.tactica-flash-central.corner.mostrar .tactica-flash-texto,
+.tactica-flash-central.penal.mostrar .tactica-flash-texto {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Penal (falta cobrada dentro del partido, no confundir con la tanda final) */
+.tactica-flash-central.penal {
+    background: linear-gradient(135deg, #d32f2f, #6e0000);
+}
+.tactica-flash-central.penal .tactica-flash-texto {
+    font-size: 46px;
+}
+.tactica-flash-central.penal.mostrar {
+    animation: flashPulso 0.8s ease-in-out infinite;
+}
+
+/* Minutos de hidratación: aviso persistente (no se autooculta con un timer,
+   se controla desde JS con data.MOSTRAR_HIDRATACION) */
+.tactica-flash-central.hidratacion {
+    background: linear-gradient(135deg, #1e88e5, #0d47a1);
+}
+.tactica-flash-central.hidratacion .tactica-flash-texto {
+    font-size: 40px;
+}
+.tactica-flash-central.hidratacion.mostrar {
+    animation: flashPulso 1.4s ease-in-out infinite;
+}
+.tactica-flash-central.hidratacion.mostrar .tactica-flash-texto {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 @keyframes tacticaSlideInRight {

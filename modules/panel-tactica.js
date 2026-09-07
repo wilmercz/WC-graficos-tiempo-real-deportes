@@ -1,3 +1,5 @@
+import { clasificarAlineacion } from './alineacion-utils.js';
+
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * PANEL TÁCTICA (CANCHA VIRTUAL)
@@ -51,7 +53,18 @@ const FORMACION_EQUIPO2 = FORMACION_EQUIPO1.map(p => ({ x: 1600 - p.x, y: p.y })
 const BANCA_EQUIPO1 = Array.from({ length: 11 }, (_, i) => ({ x: 70 + i * 46, y: 930 }));
 const BANCA_EQUIPO2 = BANCA_EQUIPO1.map(p => ({ x: 1600 - p.x, y: p.y }));
 
+// Fila de espera de la TANDA DE PENALES (definición al final del partido),
+// a lo largo de la línea de medio campo: equipo1 arriba, equipo2 abajo.
+// idx 1..10 (los 10 jugadores de campo, sin contar al arquero idx0).
+const FILA_PENALES_EQUIPO1 = Array.from({ length: 10 }, (_, i) => ({ x: 560 + i * 50, y: 400 }));
+const FILA_PENALES_EQUIPO2 = Array.from({ length: 10 }, (_, i) => ({ x: 560 + i * 50, y: 500 }));
+
 const CENTRO_CANCHA = { x: 800, y: 450 };
+
+// Logo del medio: se usa tanto de marca de agua sobre el gramado como en la
+// columna izquierda de la franja inferior (logo permanente). Si algún día
+// quieres uno distinto para cada uso, solo hay que separar esta constante.
+const LOGO_MEDIO_URL = 'https://res.cloudinary.com/dm5jp6bbj/image/upload/v1787145107/ARKI_DEPORTES/CONFIGURACION/LOGOS_DEPORTES/logo_medio_social_1787145105202.png';
 const ARCO_EQUIPO1_X = 40;   // arco que defiende el equipo 1
 const ARCO_EQUIPO2_X = 1560; // arco que defiende el equipo 2
 
@@ -68,6 +81,10 @@ class PanelTactica {
         this.db = firebaseDB;
         this.container = document.getElementById('panel-tactica');
         this.partidoRef = this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL');
+        this.alineacionRef = {
+            1: this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL/alineaciones/local'),      // equipo1
+            2: this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL/alineaciones/visitante')   // equipo2
+        };
 
         this.serverTimeOffset = 0;
         this.intervalTimer = null;   // cronómetro (texto)
@@ -77,6 +94,17 @@ class PanelTactica {
         this.primeraCarga = true;    // evita disparar animaciones con los valores iniciales
 
         this.estadoCancha = 'BANCA'; // 'BANCA' | 'JUEGO'
+        this.hidratacionActiva = false; // true mientras data.MOSTRAR_HIDRATACION === true
+        this.penalActivo = { 1: false, 2: false };   // TACTICA_PENAL1 / TACTICA_PENAL2
+        this.lesionActiva = { 1: false, 2: false };  // TACTICA_JUGADORLESION1 / TACTICA_JUGADORLESION2
+        this.penalesTandaActiva = false;             // MARCADOR_PENALES (definición final del partido)
+        this.prevSerie = { 1: {}, 2: {} };           // cache de PENALES_SERIE1/2 para detectar tiros nuevos
+
+        // Logos rotativos de la columna derecha de la franja inferior
+        // (misma fuente que panel-logos.js: /ARKI_DEPORTES/LOGOS_AI_AIRE)
+        this.logosRotativos = [];
+        this.logoRotativoIndex = 0;
+        this.logosRotativosInterval = null;
         this.expulsados = { 1: new Set(), 2: new Set() };
 
         // Cola simple para no solapar secuencias (gol/córner/expulsión)
@@ -86,9 +114,24 @@ class PanelTactica {
 
     initialize() {
         if (!this.container) return;
+
+        // Interruptor por URL: en el dispositivo que graba con cámara (donde
+        // NO se quiere que la táctica cubra la pantalla), se abre la misma
+        // página con ?ocultar_tactica=1 al final. Ese dispositivo específico
+        // nunca renderiza ni escucha nada de este panel, sin importar lo que
+        // diga MOSTRAR_TACTICA en Firebase. El otro dispositivo (audio, sin
+        // cámara) sigue usando la URL normal, sin el parámetro.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('ocultar_tactica') === '1') {
+            console.log('📴 PanelTactica: desactivado en este dispositivo (?ocultar_tactica=1 en la URL)');
+            return;
+        }
+
         this.renderBase();
         this.listenServerTime();
         this.listenFirebase();
+        this.listenAlineaciones();
+        this.listenLogosRotativos();
     }
 
     // ============================================================
@@ -145,6 +188,26 @@ class PanelTactica {
                     <div class="tactica-hinchada esquina-bl" id="tactica-hinchada-bl">${this.generarSiluetas(3)}</div>
                     <div class="tactica-hinchada esquina-br" id="tactica-hinchada-br">${this.generarSiluetas(3)}</div>
 
+                    <!-- Alineación (titulares/suplentes), a los lados de la cancha.
+                         z-index por debajo de la hinchada: si hay gol, la hinchada
+                         igual sale por encima de la lista sin hacer nada especial. -->
+                    <div class="tactica-lista-alineacion lista-izq" id="tactica-lista-1">
+                        <div class="tactica-lista-titulo">TITULARES</div>
+                        <div class="tactica-lista-jugadores" id="tactica-lista-titulares-1"></div>
+                        <div class="tactica-lista-titulo tactica-lista-titulo-supl">SUPLENTES</div>
+                        <div class="tactica-lista-jugadores tactica-lista-suplentes" id="tactica-lista-suplentes-1"></div>
+                        <div class="tactica-lista-titulo tactica-lista-titulo-cuerpo" id="tactica-lista-titulo-cuerpotecnico-1">CUERPO TÉCNICO</div>
+                        <div class="tactica-lista-jugadores tactica-lista-cuerpotecnico" id="tactica-lista-cuerpotecnico-1"></div>
+                    </div>
+                    <div class="tactica-lista-alineacion lista-der" id="tactica-lista-2">
+                        <div class="tactica-lista-titulo">TITULARES</div>
+                        <div class="tactica-lista-jugadores" id="tactica-lista-titulares-2"></div>
+                        <div class="tactica-lista-titulo tactica-lista-titulo-supl">SUPLENTES</div>
+                        <div class="tactica-lista-jugadores tactica-lista-suplentes" id="tactica-lista-suplentes-2"></div>
+                        <div class="tactica-lista-titulo tactica-lista-titulo-cuerpo" id="tactica-lista-titulo-cuerpotecnico-2">CUERPO TÉCNICO</div>
+                        <div class="tactica-lista-jugadores tactica-lista-cuerpotecnico" id="tactica-lista-cuerpotecnico-2"></div>
+                    </div>
+
                     <svg id="tactica-svg" class="tactica-svg" viewBox="0 0 1600 980" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <radialGradient id="tactica-grad" cx="50%" cy="45%" r="75%">
@@ -154,6 +217,13 @@ class PanelTactica {
                         </defs>
 
                         <rect class="tactica-fondo" x="0" y="0" width="1600" height="980" rx="0" fill="url(#tactica-grad)"></rect>
+
+                        <!-- Logo del medio como marca de agua "pintada" en el gramado.
+                             Va ANTES que las líneas/jugadores en el SVG a propósito: así
+                             queda debajo de ellos, como si estuviera pintada en el pasto. -->
+                        <image class="tactica-marca-agua" href="${LOGO_MEDIO_URL}"
+                               x="640" y="335" width="320" height="230"
+                               preserveAspectRatio="xMidYMid meet"></image>
 
                         <g class="tactica-lineas">
                             <rect x="40" y="40" width="1520" height="820" rx="4"></rect>
@@ -175,18 +245,27 @@ class PanelTactica {
                     </svg>
                 </div>
 
-                <!-- Estadio + Lugar: por debajo del límite de la cancha, no encima -->
+                <!-- Franja inferior en 3 columnas: logo permanente | estadio/lugar | logos rotativos -->
                 <div class="tactica-sede" id="tactica-sede">
-                    <svg class="tactica-sede-icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="12" cy="12" rx="10" ry="6.5" fill="none" stroke="currentColor" stroke-width="2"></ellipse>
-                        <rect x="6.5" y="9" width="11" height="6" rx="1.2" fill="currentColor"></rect>
-                    </svg>
-                    <span id="tactica-estadio"></span>
-                    <span class="tactica-sede-sep" id="tactica-sede-sep"> • </span>
-                    <svg class="tactica-sede-icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="currentColor"></path>
-                    </svg>
-                    <span id="tactica-lugar"></span>
+                    <div class="tactica-sede-col tactica-sede-col-logo">
+                        <img class="tactica-logo-permanente" src="${LOGO_MEDIO_URL}" alt="Logo del medio">
+                    </div>
+
+                    <div class="tactica-sede-col tactica-sede-col-info">
+                        <svg class="tactica-sede-icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="12" cy="12" rx="10" ry="6.5" fill="none" stroke="currentColor" stroke-width="2"></ellipse>
+                            <rect x="6.5" y="9" width="11" height="6" rx="1.2" fill="currentColor"></rect>
+                        </svg>
+                        <span id="tactica-estadio"></span>
+                        <svg class="tactica-sede-icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="currentColor"></path>
+                        </svg>
+                        <span id="tactica-lugar"></span>
+                    </div>
+
+                    <div class="tactica-sede-col tactica-sede-col-rotativos">
+                        <img class="tactica-logo-rotativo-img" id="tactica-logo-rotativo-img" alt="Logo patrocinador">
+                    </div>
                 </div>
             </div>
         `;
@@ -277,6 +356,90 @@ class PanelTactica {
         });
     }
 
+    // ============================================================
+    // ALINEACIÓN (titulares + suplentes), a los lados de la cancha
+    // ============================================================
+    // Fuente: /ARKI_DEPORTES/PARTIDOACTUAL/alineaciones/local (equipo1) y
+    // .../visitante (equipo2), poblado por inicializarAlineacionesDesdeEquipos()
+    // del lado Kotlin. Cada jugador trae { numero, nombre, posicion, titular }.
+    // Se lee también en MAYÚSCULA por defensividad (el catálogo permanente de
+    // jugadores tiene registros mezclados en mayúscula/minúscula; por las dudas
+    // cubrimos ambos casos aquí también aunque "alineaciones" debería venir
+    // limpio desde el modelo Kotlin JugadorAlineacion).
+    listenAlineaciones() {
+        [1, 2].forEach(numEquipo => {
+            this.alineacionRef[numEquipo].on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                this.renderizarAlineacion(numEquipo, data);
+            });
+        });
+    }
+
+    // ============================================================
+    // LOGOS ROTATIVOS (columna derecha de la franja inferior)
+    // ============================================================
+    // Misma fuente y mismo intervalo (60s) que panel-logos.js, pero es una
+    // rotación propia e independiente — no comparte DOM con #panel-logos.
+    listenLogosRotativos() {
+        this.db.ref('/ARKI_DEPORTES/LOGOS_AI_AIRE').on('value', (snapshot) => {
+            const data = snapshot.val();
+            this.logosRotativos = data
+                ? Object.values(data).filter(item => item?.url && typeof item.url === 'string').map(item => item.url)
+                : [];
+            this.logoRotativoIndex = 0;
+            this.mostrarLogoRotativoActual();
+            this.reiniciarRotacionLogos();
+        });
+    }
+
+    mostrarLogoRotativoActual() {
+        const img = document.getElementById('tactica-logo-rotativo-img');
+        if (!img) return;
+
+        if (!this.logosRotativos.length) {
+            img.style.display = 'none';
+            return;
+        }
+        img.style.display = 'block';
+        img.src = this.logosRotativos[this.logoRotativoIndex];
+    }
+
+    reiniciarRotacionLogos() {
+        if (this.logosRotativosInterval) clearInterval(this.logosRotativosInterval);
+        if (this.logosRotativos.length <= 1) return;
+
+        this.logosRotativosInterval = setInterval(() => {
+            this.logoRotativoIndex = (this.logoRotativoIndex + 1) % this.logosRotativos.length;
+            this.mostrarLogoRotativoActual();
+        }, 60000);
+    }
+
+    renderizarAlineacion(numEquipo, mapaJugadores) {
+        const { titulares, suplentes, cuerpoTecnico } = clasificarAlineacion(mapaJugadores);
+
+        const armarFilas = (lista) => lista.map(j =>
+            `<div class="tactica-lista-fila"><span class="tactica-lista-numero">${j.numero}</span><span class="tactica-lista-nombre">${j.nombre}</span></div>`
+        ).join('');
+
+        const contTitulares = document.getElementById(`tactica-lista-titulares-${numEquipo}`);
+        const contSuplentes = document.getElementById(`tactica-lista-suplentes-${numEquipo}`);
+        const contCuerpoTecnico = document.getElementById(`tactica-lista-cuerpotecnico-${numEquipo}`);
+        if (contTitulares) contTitulares.innerHTML = armarFilas(titulares);
+        if (contSuplentes) contSuplentes.innerHTML = armarFilas(suplentes);
+        if (contCuerpoTecnico) contCuerpoTecnico.innerHTML = armarFilas(cuerpoTecnico);
+
+        // El título "CUERPO TÉCNICO" solo se muestra si hay alguien ahí (DT/asistentes)
+        const tituloCuerpoTecnico = document.getElementById(`tactica-lista-titulo-cuerpotecnico-${numEquipo}`);
+        if (tituloCuerpoTecnico) tituloCuerpoTecnico.style.display = cuerpoTecnico.length ? 'block' : 'none';
+        if (contCuerpoTecnico) contCuerpoTecnico.style.display = cuerpoTecnico.length ? 'flex' : 'none';
+
+        // Si aún no hay alineación cargada para este equipo, ocultamos el panel
+        // completo en vez de mostrar un recuadro vacío.
+        const totalPersonas = titulares.length + suplentes.length + cuerpoTecnico.length;
+        const panelEl = document.getElementById(`tactica-lista-${numEquipo}`);
+        if (panelEl) panelEl.style.display = totalPersonas ? 'flex' : 'none';
+    }
+
     listenFirebase() {
         this.partidoRef.on('value', (snapshot) => {
             const data = snapshot.val();
@@ -303,6 +466,24 @@ class PanelTactica {
             // Al ocultar la táctica se le devuelve el control normal.
             // ============================================================
             this.suprimirPanelGol(debeVerse);
+
+            // Minutos de hidratación: manda a todos a la banca y muestra el
+            // aviso mientras data.MOSTRAR_HIDRATACION sea true, sin importar
+            // en qué NumeroDeTiempo esté el partido.
+            const mostrarHidratacion = data.MOSTRAR_HIDRATACION === true || data.MOSTRAR_HIDRATACION === 'true';
+            this.actualizarHidratacion(mostrarHidratacion, data);
+
+            // Penal en juego (falta cobrada dentro del partido, no la tanda final)
+            this.actualizarPenal(1, data.TACTICA_PENAL1 === true || data.TACTICA_PENAL1 === 'true');
+            this.actualizarPenal(2, data.TACTICA_PENAL2 === true || data.TACTICA_PENAL2 === 'true');
+
+            // Jugador lesionado: sus compañeros lo rodean, todo se congela
+            this.actualizarLesion(1, data.TACTICA_JUGADORLESION1 === true || data.TACTICA_JUGADORLESION1 === 'true');
+            this.actualizarLesion(2, data.TACTICA_JUGADORLESION2 === true || data.TACTICA_JUGADORLESION2 === 'true');
+
+            // Tanda de penales (definición al final del partido)
+            const mostrarTandaPenales = data.MARCADOR_PENALES === true || data.MARCADOR_PENALES === 'true';
+            this.actualizarTandaPenales(mostrarTandaPenales, data);
 
             this.actualizarEncabezado(data);
             this.actualizarEstadoJuego(data);
@@ -366,14 +547,15 @@ class PanelTactica {
     }
 
     /** Estadio + Lugar. Si alguno falta, se oculta el separador " • " y, si no hay ninguno, se oculta todo el cintillo. */
+    /** Estadio + Lugar (columna central de la franja inferior). La franja en
+     *  sí ya no se oculta por esto — ahora también vive ahí el logo permanente
+     *  y los logos rotativos, así que se queda siempre visible. */
     actualizarSede(data) {
         const estadio = (data.ESTADIO || '').trim();
         const lugar = (data.LUGAR || '').trim();
 
         document.getElementById('tactica-estadio').textContent = estadio;
         document.getElementById('tactica-lugar').textContent = lugar;
-        document.getElementById('tactica-sede-sep').style.display = (estadio && lugar) ? 'inline' : 'none';
-        document.getElementById('tactica-sede').style.display = (estadio || lugar) ? 'flex' : 'none';
     }
 
     /**
@@ -417,7 +599,264 @@ class PanelTactica {
     // ============================================================
     // ESTADO DEL PARTIDO (cronómetro + banca/formación)
     // ============================================================
+    /**
+     * Minutos de hidratación (data.MOSTRAR_HIDRATACION).
+     * Al activarse: todos a la banca + aviso persistente en el centro.
+     * Al desactivarse: se oculta el aviso y, si el partido seguía en juego
+     * (1T/3T), los jugadores vuelven a formación.
+     */
+    /** true si CUALQUIER interrupción especial está activa (hidratación, penal, lesión o tanda de penales) */
+    hayOverrideActivo() {
+        return this.hidratacionActiva
+            || this.penalActivo[1] || this.penalActivo[2]
+            || this.lesionActiva[1] || this.lesionActiva[2]
+            || this.penalesTandaActiva;
+    }
+
+    /**
+     * Se llama cuando UNA interrupción específica termina. Si ya no queda
+     * ninguna otra activa, reaplica banca o formación según corresponda.
+     * Usa pasarAFormacion(forzar=true) porque, al salir de un penal/lesión,
+     * el estado interno nunca dejó de ser 'JUEGO' — sin forzar, el guard de
+     * pasarAFormacion() no reaplicaría las posiciones ni reiniciaría el
+     * "wander".
+     */
+    reanudarSiNoHayMasOverrides() {
+        if (this.hayOverrideActivo()) return; // todavía hay otra interrupción activa, no tocar nada
+        if (!this.currentData) return;
+
+        const numeroDeTiempo = (this.currentData.NumeroDeTiempo || '').toUpperCase();
+        if (numeroDeTiempo === '1T' || numeroDeTiempo === '3T') {
+            this.pasarAFormacion(true);
+        } else {
+            this.pasarABanca();
+        }
+    }
+
+    actualizarHidratacion(activa, data) {
+        const yaEstabaActiva = this.hidratacionActiva;
+        this.hidratacionActiva = activa;
+
+        if (activa && !yaEstabaActiva) {
+            this.pasarABanca();
+            this.mostrarFlashCentral('MINUTOS DE HIDRATACIÓN', 'hidratacion');
+        } else if (!activa && yaEstabaActiva) {
+            this.ocultarFlashCentral();
+            this.reanudarSiNoHayMasOverrides();
+        }
+    }
+
+    /**
+     * Penal DENTRO del partido (falta cobrada), no la tanda de definición
+     * final. numEquipoQueTira = equipo que cobra el penal (ataca el arco
+     * contrario). Todo se congela (se detiene el "wander") mientras dure.
+     */
+    actualizarPenal(numEquipoQueTira, activo) {
+        const yaEstaba = this.penalActivo[numEquipoQueTira];
+        this.penalActivo[numEquipoQueTira] = activo;
+        if (activo === yaEstaba) return;
+
+        if (activo) {
+            this.detenerWander();
+
+            const arcoRivalX = numEquipoQueTira === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
+            const signo = numEquipoQueTira === 1 ? -1 : 1;
+            const idxPateador = 9; // delantero fijo como pateador (simplificación: no sabemos quién cobra realmente)
+
+            if (!this.expulsados[numEquipoQueTira].has(idxPateador)) {
+                this.moverJugador(numEquipoQueTira, idxPateador, arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1300);
+            }
+            this.moverBalon(arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1300);
+            this.mostrarFlashCentral('PENAL', 'penal');
+        } else {
+            this.ocultarFlashCentral();
+            this.reanudarSiNoHayMasOverrides();
+        }
+    }
+
+    /**
+     * Jugador lesionado: se queda "en el piso" en su posición de formación y
+     * varios compañeros (menos el arquero) se acercan a rodearlo en círculo.
+     * No sabemos cuál jugador específico se lesionó (el dato no llega desde
+     * Firebase), así que se usa siempre el mismo slot (idx 6, mediocampista
+     * central) como punto de reunión — es una simplificación visual.
+     */
+    actualizarLesion(numEquipo, activo) {
+        const yaEstaba = this.lesionActiva[numEquipo];
+        this.lesionActiva[numEquipo] = activo;
+        if (activo === yaEstaba) return;
+
+        if (activo) {
+            this.detenerWander();
+
+            const formacion = numEquipo === 1 ? FORMACION_EQUIPO1 : FORMACION_EQUIPO2;
+            const idxLesionado = 6;
+            const centro = formacion[idxLesionado];
+            const idxAlrededor = [1, 2, 5, 7, 8, 9, 10].filter(
+                i => i !== idxLesionado && !this.expulsados[numEquipo].has(i)
+            );
+
+            const radio = 70;
+            idxAlrededor.forEach((idx, i) => {
+                const angulo = (i / idxAlrededor.length) * Math.PI * 2;
+                const x = centro.x + Math.cos(angulo) * radio;
+                const y = centro.y + Math.sin(angulo) * radio;
+                this.moverJugador(numEquipo, idx, x, y, 1400);
+            });
+        } else {
+            this.reanudarSiNoHayMasOverrides();
+        }
+    }
+
+    // ============================================================
+    // TANDA DE PENALES (definición al final del partido)
+    // ============================================================
+    // Fuente de verdad: PENALES_SERIE1 / PENALES_SERIE2 — el MISMO campo que
+    // ya usa panel-penales.js para pintar los puntos en verde (gol, valor 1)
+    // o rojo (fallo, valor 0). Cada índice i del arreglo es el tiro número
+    // (i+1) de ESE equipo (no el orden global entre ambos equipos).
+    //
+    // ⚠️ LÓGICA PENDIENTE DE REVISAR BIEN: qué equipo inicia la tanda.
+    // Se asume PENALES_INICIA = 1 → arranca el equipo1, = 2 → arranca el
+    // equipo2. Mientras no exista un primer valor en PENALES_TURNO, se usa
+    // PENALES_INICIA como referencia inicial; en cuanto Kotlin empiece a
+    // actualizar PENALES_TURNO en cada tiro, ese campo manda.
+
+    actualizarTandaPenales(activa, data) {
+        const yaEstaba = this.penalesTandaActiva;
+        this.penalesTandaActiva = activa;
+
+        if (activa && !yaEstaba) {
+            this.detenerWander();
+            this.ubicarFormacionPenales();
+            this.prevSerie = { 1: {}, 2: {} }; // nueva tanda: reinicia el cache de tiros ya vistos
+        } else if (!activa && yaEstaba) {
+            this.ocultarFlashCentral();
+            this.reanudarSiNoHayMasOverrides();
+            return;
+        }
+
+        if (!activa) return;
+
+        this.detectarNuevoTiro(1, data.PENALES_SERIE1);
+        this.detectarNuevoTiro(2, data.PENALES_SERIE2);
+
+        // Solo reubicamos al pateador actual si no hay una animación de tiro
+        // en curso (this.secuenciaActiva la maneja la cola encolar/procesarCola)
+        if (!this.secuenciaActiva) {
+            const turno = Number(data.PENALES_TURNO || data.PENALES_INICIA || 1);
+            this.ubicarPateadorActual(turno === 2 ? 2 : 1, data);
+        }
+    }
+
+    /** Arqueros a sus propios arcos; el resto, en fila sobre la línea de medio campo */
+    ubicarFormacionPenales() {
+        this.moverJugador(1, 0, FORMACION_EQUIPO1[0].x, FORMACION_EQUIPO1[0].y, 1200);
+        this.moverJugador(2, 0, FORMACION_EQUIPO2[0].x, FORMACION_EQUIPO2[0].y, 1200);
+
+        for (let idx = 1; idx <= 10; idx++) {
+            if (!this.expulsados[1].has(idx)) {
+                const pos = FILA_PENALES_EQUIPO1[idx - 1];
+                this.moverJugador(1, idx, pos.x, pos.y, 1400);
+            }
+            if (!this.expulsados[2].has(idx)) {
+                const pos = FILA_PENALES_EQUIPO2[idx - 1];
+                this.moverJugador(2, idx, pos.x, pos.y, 1400);
+            }
+        }
+        this.moverBalon(CENTRO_CANCHA.x, CENTRO_CANCHA.y, 1200);
+    }
+
+    /** Cuenta cuántos tiros de esa serie ya están resueltos (gol o fallo, no importa cuál) */
+    contarTirosResueltos(serieObj) {
+        if (!serieObj) return 0;
+        let count = 0;
+        for (let i = 0; i < 20; i++) { // margen amplio por si hay muerte súbita
+            const v = Array.isArray(serieObj) ? serieObj[i] : (serieObj[i] ?? serieObj[String(i)]);
+            const resuelto = v === 1 || v === '1' || v === true || v === 0 || v === '0' || v === false;
+            if (resuelto) count++; else break;
+        }
+        return count;
+    }
+
+    /** Mueve al próximo pateador del equipo que tiene el turno hacia el punto de tiro */
+    ubicarPateadorActual(numEquipoTurno, data) {
+        const serie = numEquipoTurno === 1 ? data.PENALES_SERIE1 : data.PENALES_SERIE2;
+        const idxPateador = this.contarTirosResueltos(serie) + 1; // 1er pateador = idx1, 2do = idx2...
+
+        // Más de 10 tiros para un mismo equipo (muerte súbita repitiendo la
+        // fila) no está contemplado todavía — se queda como está.
+        if (idxPateador > 10) return;
+
+        const arcoRivalX = numEquipoTurno === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
+        const signo = numEquipoTurno === 1 ? -1 : 1;
+
+        if (!this.expulsados[numEquipoTurno].has(idxPateador)) {
+            this.moverJugador(numEquipoTurno, idxPateador, arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1400);
+        }
+        this.moverBalon(arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1400);
+    }
+
+    /** Compara la serie nueva contra el cache y encola la animación de cada tiro recién resuelto */
+    detectarNuevoTiro(numEquipo, serieActual) {
+        if (!serieActual) return;
+
+        const cacheNuevo = {};
+        for (let i = 0; i < 20; i++) {
+            const v = Array.isArray(serieActual) ? serieActual[i] : (serieActual[i] ?? serieActual[String(i)]);
+            const esGol = v === 1 || v === '1' || v === true;
+            const esFallo = v === 0 || v === '0' || v === false;
+
+            if (esGol || esFallo) {
+                cacheNuevo[i] = esGol;
+                if (this.prevSerie[numEquipo][i] === undefined) {
+                    const idxPateador = i + 1;
+                    this.encolar(() => this.secuenciaTiroPenal(numEquipo, idxPateador, esGol));
+                }
+            }
+        }
+        this.prevSerie[numEquipo] = cacheNuevo;
+    }
+
+    /** Animación de UN tiro: balón al fondo de la red (gol) o se queda en el arco (fallo) */
+    async secuenciaTiroPenal(numEquipoQueTira, idxPateador, esGol) {
+        const arcoRivalX = numEquipoQueTira === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
+        const signo = numEquipoQueTira === 1 ? -1 : 1;
+
+        if (esGol) {
+            // El balón entra hasta el fondo de la red
+            this.moverBalon(arcoRivalX, CENTRO_CANCHA.y, 700);
+            this.mostrarFlashCentral('¡GOL!', 'gol');
+
+            const el = document.getElementById(`tactica-j-t${numEquipoQueTira}-${idxPateador}`);
+            if (el) el.classList.add('celebrando');
+            await this.sleep(1500);
+            if (el) el.classList.remove('celebrando');
+        } else {
+            // Se queda en el arco: el arquero lo ataja o se va afuera, nunca cruza la línea
+            this.moverBalon(arcoRivalX + signo * -30, CENTRO_CANCHA.y, 700);
+            this.mostrarFlashCentral('FALLÓ', 'corner');
+            await this.sleep(1500);
+        }
+
+        this.ocultarFlashCentral();
+
+        // El pateador regresa a su lugar en la fila de espera
+        if (!this.expulsados[numEquipoQueTira].has(idxPateador)) {
+            const filaEquipo = numEquipoQueTira === 1 ? FILA_PENALES_EQUIPO1 : FILA_PENALES_EQUIPO2;
+            const pos = filaEquipo[idxPateador - 1];
+            this.moverJugador(numEquipoQueTira, idxPateador, pos.x, pos.y, 1200);
+        }
+        this.moverBalon(CENTRO_CANCHA.x, CENTRO_CANCHA.y, 1000);
+    }
+
     actualizarEstadoJuego(data) {
+        // Mientras haya CUALQUIER interrupción especial activa (hidratación,
+        // penal, lesión o tanda de penales), esas funciones tienen el control
+        // total de la cancha; no lo pisamos con la lógica normal de
+        // NumeroDeTiempo.
+        if (this.hayOverrideActivo()) return;
+
         const estadoEl = document.getElementById('tactica-estado');
         const numeroDeTiempo = data.NumeroDeTiempo;
         const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
@@ -588,8 +1027,8 @@ class PanelTactica {
         this.moverBalon(CENTRO_CANCHA.x, CENTRO_CANCHA.y, 1200);
     }
 
-    pasarAFormacion() {
-        if (this.estadoCancha === 'JUEGO') return;
+    pasarAFormacion(forzar = false) {
+        if (this.estadoCancha === 'JUEGO' && !forzar) return;
         this.estadoCancha = 'JUEGO';
         this.aplicarPosiciones(1, FORMACION_EQUIPO1);
         this.aplicarPosiciones(2, FORMACION_EQUIPO2);
@@ -792,7 +1231,7 @@ class PanelTactica {
         const textoEl = document.getElementById('tactica-flash-texto');
         if (!el || !textoEl) return;
         textoEl.textContent = texto;
-        el.classList.remove('gol', 'corner', 'mostrar');
+        el.classList.remove('gol', 'corner', 'hidratacion', 'mostrar');
         void el.offsetWidth; // fuerza reflow para poder reiniciar las animaciones de las capas
         el.classList.add(claseTipo, 'mostrar');
     }
