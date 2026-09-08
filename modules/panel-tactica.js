@@ -1,4 +1,4 @@
-import { clasificarAlineacion } from './alineacion-utils.js';
+import { clasificarAlineacion, LOGO_MEDIO_URL } from './alineacion-utils.js';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -61,10 +61,7 @@ const FILA_PENALES_EQUIPO2 = Array.from({ length: 10 }, (_, i) => ({ x: 560 + i 
 
 const CENTRO_CANCHA = { x: 800, y: 450 };
 
-// Logo del medio: se usa tanto de marca de agua sobre el gramado como en la
-// columna izquierda de la franja inferior (logo permanente). Si algún día
-// quieres uno distinto para cada uso, solo hay que separar esta constante.
-const LOGO_MEDIO_URL = 'https://res.cloudinary.com/dm5jp6bbj/image/upload/v1787145107/ARKI_DEPORTES/CONFIGURACION/LOGOS_DEPORTES/logo_medio_social_1787145105202.png';
+// LOGO_MEDIO_URL ahora viene importado de alineacion-utils.js (una sola fuente)
 const ARCO_EQUIPO1_X = 40;   // arco que defiende el equipo 1
 const ARCO_EQUIPO2_X = 1560; // arco que defiende el equipo 2
 
@@ -211,12 +208,21 @@ class PanelTactica {
                     <svg id="tactica-svg" class="tactica-svg" viewBox="0 0 1600 980" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <radialGradient id="tactica-grad" cx="50%" cy="45%" r="75%">
-                                <stop offset="0%" stop-color="#1f8a4c" stop-opacity="0.6"/>
-                                <stop offset="100%" stop-color="#0c3a20" stop-opacity="0.6"/>
+                                <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0.22"/>
                             </radialGradient>
+
+                            <!-- Franjas de césped estilo cancha real (cortes de podadora) -->
+                            <pattern id="tactica-cesped-cebra" width="200" height="980" patternUnits="userSpaceOnUse">
+                                <rect x="0" y="0" width="100" height="980" fill="#0d5c52"></rect>
+                                <rect x="100" y="0" width="100" height="980" fill="#124f47"></rect>
+                            </pattern>
                         </defs>
 
-                        <rect class="tactica-fondo" x="0" y="0" width="1600" height="980" rx="0" fill="url(#tactica-grad)"></rect>
+                        <!-- Base: césped a rayas -->
+                        <rect class="tactica-fondo" x="0" y="0" width="1600" height="980" rx="0" fill="url(#tactica-cesped-cebra)"></rect>
+                        <!-- Encima: viñeta oscura sutil para dar profundidad, sin tapar las rayas -->
+                        <rect x="0" y="0" width="1600" height="980" fill="url(#tactica-grad)"></rect>
 
                         <!-- Logo del medio como marca de agua "pintada" en el gramado.
                              Va ANTES que las líneas/jugadores en el SVG a propósito: así
