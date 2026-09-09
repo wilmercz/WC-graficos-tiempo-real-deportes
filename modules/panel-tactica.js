@@ -97,6 +97,12 @@ class PanelTactica {
         this.penalesTandaActiva = false;             // MARCADOR_PENALES (definición final del partido)
         this.prevSerie = { 1: {}, 2: {} };           // cache de PENALES_SERIE1/2 para detectar tiros nuevos
 
+        // Lado de cancha. "IZQUIERDA"/"DERECHA" se refiere al equipo1; el
+        // equipo2 siempre está del lado contrario. Por defecto, equipo1
+        // arranca a la izquierda (comportamiento de siempre, sin romper nada
+        // si Kotlin todavía no envía este campo).
+        this.ladoEquipo1 = 'IZQUIERDA'; // TACTICA_LADO_EQUIPO1
+
         // Logos rotativos de la columna derecha de la franja inferior
         // (misma fuente que panel-logos.js: /ARKI_DEPORTES/LOGOS_AI_AIRE)
         this.logosRotativos = [];
@@ -281,6 +287,7 @@ class PanelTactica {
         this.aplicarPosiciones(1, BANCA_EQUIPO1, true);
         this.aplicarPosiciones(2, BANCA_EQUIPO2, true);
         this.moverBalon(CENTRO_CANCHA.x, CENTRO_CANCHA.y, 0);
+        this.actualizarLadoVisual();
     }
 
     /**
@@ -334,9 +341,9 @@ class PanelTactica {
      * derecho → esquinas derechas), sin importar hacia qué arco atacó.
      */
     mostrarHinchada(numEquipoAnota) {
-        const esquinas = numEquipoAnota === 1
-            ? ['tactica-hinchada-tl', 'tactica-hinchada-bl']  // nombre del equipo 1 está a la izquierda
-            : ['tactica-hinchada-tr', 'tactica-hinchada-br']; // nombre del equipo 2 está a la derecha
+        const esquinas = this.ladoActualDe(numEquipoAnota) === 'IZQUIERDA'
+            ? ['tactica-hinchada-tl', 'tactica-hinchada-bl']  // nombre del equipo está AHORA a la izquierda
+            : ['tactica-hinchada-tr', 'tactica-hinchada-br']; // nombre del equipo está AHORA a la derecha
 
         esquinas.forEach(id => {
             const el = document.getElementById(id);
@@ -452,6 +459,17 @@ class PanelTactica {
             if (!data) return;
 
             this.currentData = data;
+
+            // Cambio de lado (ej. al segundo tiempo). Si cambió, actualizamos
+            // la barra superior/listas ya mismo y, si el partido está en
+            // juego, reubicamos a todos con el nuevo lado sin esperar a que
+            // cambie otra cosa.
+            const nuevoLadoEquipo1 = (data.TACTICA_LADO_EQUIPO1 === 'DERECHA') ? 'DERECHA' : 'IZQUIERDA';
+            if (nuevoLadoEquipo1 !== this.ladoEquipo1) {
+                this.ladoEquipo1 = nuevoLadoEquipo1;
+                this.actualizarLadoVisual();
+                if (this.estadoCancha === 'JUEGO') this.pasarAFormacion(true);
+            }
 
             const deporte = (data.DEPORTE || 'FUTBOL').toUpperCase();
             const mostrarTactica = data.MOSTRAR_TACTICA === true || data.MOSTRAR_TACTICA === 'true';
@@ -612,6 +630,75 @@ class PanelTactica {
      * (1T/3T), los jugadores vuelven a formación.
      */
     /** true si CUALQUIER interrupción especial está activa (hidratación, penal, lesión o tanda de penales) */
+    // ============================================================
+    // LADO DE CANCHA (cambio de lado al segundo tiempo)
+    // ============================================================
+    // Un solo punto de verdad: todo lo que dibuja posiciones, decide arcos,
+    // arma la barra superior o las listas laterales, pasa por estas
+    // funciones. Así nunca queda una parte de la pantalla desincronizada
+    // del resto cuando cambia el lado.
+
+    /** "IZQUIERDA" o "DERECHA" — de qué lado está AHORA ese equipo */
+    ladoActualDe(numEquipo) {
+        if (numEquipo === 1) return this.ladoEquipo1;
+        return this.ladoEquipo1 === 'IZQUIERDA' ? 'DERECHA' : 'IZQUIERDA';
+    }
+
+    /** true si ese equipo NO está en su lado "de fábrica" (equipo1=izquierda, equipo2=derecha) */
+    debeInvertirseEnCancha(numEquipo) {
+        const ladoCanonico = numEquipo === 1 ? 'IZQUIERDA' : 'DERECHA';
+        return this.ladoActualDe(numEquipo) !== ladoCanonico;
+    }
+
+    /** Espeja un punto {x,y} en el eje X si ese equipo cambió de lado */
+    transformarCoord(numEquipo, punto) {
+        if (!this.debeInvertirseEnCancha(numEquipo)) return punto;
+        return { x: 1600 - punto.x, y: punto.y };
+    }
+
+    /** Arco que defiende ese equipo AHORA MISMO */
+    arcoQueDefiende(numEquipo) {
+        return this.ladoActualDe(numEquipo) === 'IZQUIERDA' ? ARCO_EQUIPO1_X : ARCO_EQUIPO2_X;
+    }
+
+    /** Arco que ataca ese equipo AHORA MISMO (el contrario al que defiende) */
+    arcoQueAtaca(numEquipo) {
+        return this.arcoQueDefiende(numEquipo) === ARCO_EQUIPO1_X ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
+    }
+
+    /** Signo (±1) para alejar un festejo/formación del arco hacia el centro de la cancha */
+    direccionHaciaCentro(arcoX) {
+        return arcoX === ARCO_EQUIPO1_X ? 1 : -1;
+    }
+
+    /**
+     * Refleja el lado actual en la barra superior (nombres/escudos/goles) y
+     * en las listas laterales (titulares/suplentes) moviendo la CLASE
+     * izq/der entre los dos bloques — el contenido de cada uno sigue siendo
+     * siempre el mismo equipo, solo cambia dónde se dibuja.
+     */
+    actualizarLadoVisual() {
+        const equipo1Izq = this.ladoEquipo1 === 'IZQUIERDA';
+
+        const bloque1 = document.getElementById('tactica-equipo1')?.closest('.tactica-equipo-info');
+        const bloque2 = document.getElementById('tactica-equipo2')?.closest('.tactica-equipo-info');
+        if (bloque1 && bloque2) {
+            bloque1.classList.toggle('equipo-izq', equipo1Izq);
+            bloque1.classList.toggle('equipo-der', !equipo1Izq);
+            bloque2.classList.toggle('equipo-izq', !equipo1Izq);
+            bloque2.classList.toggle('equipo-der', equipo1Izq);
+        }
+
+        const lista1 = document.getElementById('tactica-lista-1');
+        const lista2 = document.getElementById('tactica-lista-2');
+        if (lista1 && lista2) {
+            lista1.classList.toggle('lista-izq', equipo1Izq);
+            lista1.classList.toggle('lista-der', !equipo1Izq);
+            lista2.classList.toggle('lista-izq', !equipo1Izq);
+            lista2.classList.toggle('lista-der', equipo1Izq);
+        }
+    }
+
     hayOverrideActivo() {
         return this.hidratacionActiva
             || this.penalActivo[1] || this.penalActivo[2]
@@ -665,8 +752,8 @@ class PanelTactica {
         if (activo) {
             this.detenerWander();
 
-            const arcoRivalX = numEquipoQueTira === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
-            const signo = numEquipoQueTira === 1 ? -1 : 1;
+            const arcoRivalX = this.arcoQueAtaca(numEquipoQueTira);
+            const signo = this.direccionHaciaCentro(arcoRivalX);
             const idxPateador = 9; // delantero fijo como pateador (simplificación: no sabemos quién cobra realmente)
 
             if (!this.expulsados[numEquipoQueTira].has(idxPateador)) {
@@ -757,16 +844,18 @@ class PanelTactica {
 
     /** Arqueros a sus propios arcos; el resto, en fila sobre la línea de medio campo */
     ubicarFormacionPenales() {
-        this.moverJugador(1, 0, FORMACION_EQUIPO1[0].x, FORMACION_EQUIPO1[0].y, 1200);
-        this.moverJugador(2, 0, FORMACION_EQUIPO2[0].x, FORMACION_EQUIPO2[0].y, 1200);
+        const gk1 = this.transformarCoord(1, FORMACION_EQUIPO1[0]);
+        const gk2 = this.transformarCoord(2, FORMACION_EQUIPO2[0]);
+        this.moverJugador(1, 0, gk1.x, gk1.y, 1200);
+        this.moverJugador(2, 0, gk2.x, gk2.y, 1200);
 
         for (let idx = 1; idx <= 10; idx++) {
             if (!this.expulsados[1].has(idx)) {
-                const pos = FILA_PENALES_EQUIPO1[idx - 1];
+                const pos = this.transformarCoord(1, FILA_PENALES_EQUIPO1[idx - 1]);
                 this.moverJugador(1, idx, pos.x, pos.y, 1400);
             }
             if (!this.expulsados[2].has(idx)) {
-                const pos = FILA_PENALES_EQUIPO2[idx - 1];
+                const pos = this.transformarCoord(2, FILA_PENALES_EQUIPO2[idx - 1]);
                 this.moverJugador(2, idx, pos.x, pos.y, 1400);
             }
         }
@@ -794,8 +883,8 @@ class PanelTactica {
         // fila) no está contemplado todavía — se queda como está.
         if (idxPateador > 10) return;
 
-        const arcoRivalX = numEquipoTurno === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
-        const signo = numEquipoTurno === 1 ? -1 : 1;
+        const arcoRivalX = this.arcoQueAtaca(numEquipoTurno);
+        const signo = this.direccionHaciaCentro(arcoRivalX);
 
         if (!this.expulsados[numEquipoTurno].has(idxPateador)) {
             this.moverJugador(numEquipoTurno, idxPateador, arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1400);
@@ -826,8 +915,8 @@ class PanelTactica {
 
     /** Animación de UN tiro: balón al fondo de la red (gol) o se queda en el arco (fallo) */
     async secuenciaTiroPenal(numEquipoQueTira, idxPateador, esGol) {
-        const arcoRivalX = numEquipoQueTira === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
-        const signo = numEquipoQueTira === 1 ? -1 : 1;
+        const arcoRivalX = this.arcoQueAtaca(numEquipoQueTira);
+        const signo = this.direccionHaciaCentro(arcoRivalX);
 
         if (esGol) {
             // El balón entra hasta el fondo de la red
@@ -850,7 +939,7 @@ class PanelTactica {
         // El pateador regresa a su lugar en la fila de espera
         if (!this.expulsados[numEquipoQueTira].has(idxPateador)) {
             const filaEquipo = numEquipoQueTira === 1 ? FILA_PENALES_EQUIPO1 : FILA_PENALES_EQUIPO2;
-            const pos = filaEquipo[idxPateador - 1];
+            const pos = this.transformarCoord(numEquipoQueTira, filaEquipo[idxPateador - 1]);
             this.moverJugador(numEquipoQueTira, idxPateador, pos.x, pos.y, 1200);
         }
         this.moverBalon(CENTRO_CANCHA.x, CENTRO_CANCHA.y, 1000);
@@ -1045,7 +1134,8 @@ class PanelTactica {
     aplicarPosiciones(numEquipo, formacion, instantaneo = false) {
         formacion.forEach((pos, idx) => {
             if (this.expulsados[numEquipo].has(idx)) return; // se queda donde fue expulsado
-            this.moverJugador(numEquipo, idx, pos.x, pos.y, instantaneo ? 0 : 1300);
+            const p = this.transformarCoord(numEquipo, pos);
+            this.moverJugador(numEquipo, idx, p.x, p.y, instantaneo ? 0 : 1300);
         });
     }
 
@@ -1093,7 +1183,8 @@ class PanelTactica {
 
                 const x = this.clamp(base.x + (Math.random() * 2 - 1) * rangoX, 60, 1540);
                 const y = this.clamp(base.y + (Math.random() * 2 - 1) * rangoY, 60, 840);
-                this.moverJugador(numEquipo, idx, x, y, 2600);
+                const p = this.transformarCoord(numEquipo, { x, y });
+                this.moverJugador(numEquipo, idx, p.x, p.y, 2600);
             });
         });
 
@@ -1117,8 +1208,8 @@ class PanelTactica {
     async secuenciaGol(numEquipoAnota) {
         this.detenerWander();
 
-        const arcoRivalX = numEquipoAnota === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
-        const signo = numEquipoAnota === 1 ? -1 : 1; // de qué lado se agrupan respecto al arco
+        const arcoRivalX = this.arcoQueAtaca(numEquipoAnota);
+        const signo = this.direccionHaciaCentro(arcoRivalX); // de qué lado se agrupan respecto al arco
         const idxAtacantes = [7, 8, 9, 10].filter(i => !this.expulsados[numEquipoAnota].has(i));
 
         // 1) El equipo que anota avanza hacia el arco rival junto con el balón
@@ -1160,11 +1251,11 @@ class PanelTactica {
     async secuenciaCorner(numEquipoCobra) {
         this.detenerWander();
 
-        const arcoRivalX = numEquipoCobra === 1 ? ARCO_EQUIPO2_X : ARCO_EQUIPO1_X;
+        const arcoRivalX = this.arcoQueAtaca(numEquipoCobra);
         const esquinaArribaY = 55;
         const esquinaAbajoY = 845;
         const esquinaY = Math.random() < 0.5 ? esquinaArribaY : esquinaAbajoY;
-        const signo = numEquipoCobra === 1 ? -1 : 1;
+        const signo = this.direccionHaciaCentro(arcoRivalX);
 
         const idxCobrador = this.expulsados[numEquipoCobra].has(9) ? 8 : 9;
         const idxAtacantes = [7, 8, 10].filter(i => i !== idxCobrador && !this.expulsados[numEquipoCobra].has(i));

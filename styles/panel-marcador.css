@@ -1,7 +1,7 @@
 /* ===============================
    PANEL MARCADOR
 ================================ */
-
+ 
 #panel-marcador {
     position: absolute;   /* ✅ faltaba */
     top: 20px;
@@ -9,7 +9,7 @@
     display: none;
     white-space: nowrap; /* 🛑 Regla de oro: Prohibido romper líneas */
 }
-
+ 
 /* Wrapper */
 .marcador-wrapper {
     width: fit-content;
@@ -19,7 +19,7 @@
     flex-direction: column;     /* ✅ */
     align-items: center;        /* ✅ centra hijos */
 }
-
+ 
 /* Barra superior estado */
 .marcador-estado {
     text-align: center;
@@ -30,39 +30,39 @@
     /*display: inline-block; /* se mantiene compacto */
     letter-spacing: 0.5px; /* aire general */
 }
-
+ 
 /* Separación visual entre 1T y el reloj */
 .marcador-estado {
     white-space: nowrap;
 }
-
+ 
 /* Estado: Por Jugarse */
 .marcador-estado.por-jugarse {
     background-color: #006400; /* Verde oscuro */
     font-size: 15px;
     color: #ffffff;
 }
-
+ 
 /* Estado: Entretiempo */
 .marcador-estado.entretiempo {
     background-color:  hsl(24, 98%, 33%); /* Naranja del tema */
     font-size: 15px;
     color: var(--color-texto-primario);
 }
-
+ 
 /* Estado dinámico para cuando el partido ha finalizado */
 .marcador-estado.finalizado {
     background-color: #b30000; /* Rojo oscuro para indicar finalización */
     font-size: 15px;
     color: #ffffff;
 }
-
+ 
 /* Cuerpo */
 .marcador-body {
     display: flex;
     align-items: center;
 }
-
+ 
 /* Equipos */
 .marcador-equipo {
     display: inline-block;
@@ -71,23 +71,23 @@
     font-weight: bold;
     min-width: 160px;
     text-align: center;
-
+ 
     background: linear-gradient(
         to bottom,
         var(--color-primary-dark) 0%,
         var(--color-primario) 50%,
         var(--color-primary-dark) 100%
     );
-
+ 
     position: relative;
 }
-
+ 
 /* =========================================
    CORTES EXTERNOS (como tu captura)
    - Izquierda: corta lado IZQUIERDO
    - Derecha: corta lado DERECHO
 ========================================= */
-
+ 
 .marcador-equipo.equipo-izq {
     clip-path: polygon(
         0 0,                      /* Esquina superior izquierda */
@@ -97,7 +97,7 @@
         0 calc(100% - 12px)       /* Esquina cortada */
     );
 }
-
+ 
 .marcador-equipo.equipo-der {
     clip-path: polygon(
         0 0,                      /* Esquina superior izquierda */
@@ -107,8 +107,8 @@
         0 100%                    /* Esquina inferior izquierda */
     );
 }
-
-
+ 
+ 
 /* Marcador central */
 .marcador-score {
     padding: 1px 22px;
@@ -122,10 +122,10 @@
         var(--color-secundario) 50%,
         var(--color-secondary-dark) 100%
     );
-
+ 
     position: relative;
 }
-
+ 
 .score-separador {
     margin: 0 8px;
 }
