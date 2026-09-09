@@ -750,21 +750,66 @@ class PanelTactica {
         if (activo === yaEstaba) return;
 
         if (activo) {
-            this.detenerWander();
-
-            const arcoRivalX = this.arcoQueAtaca(numEquipoQueTira);
-            const signo = this.direccionHaciaCentro(arcoRivalX);
-            const idxPateador = 9; // delantero fijo como pateador (simplificación: no sabemos quién cobra realmente)
-
-            if (!this.expulsados[numEquipoQueTira].has(idxPateador)) {
-                this.moverJugador(numEquipoQueTira, idxPateador, arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1300);
-            }
-            this.moverBalon(arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1300);
-            this.mostrarFlashCentral('PENAL', 'penal');
+            // Se encola (misma cola que gol/córner) para GARANTIZAR un tiempo
+            // mínimo visible del armado del penal. Sin esto, si el gol se
+            // confirma casi en el mismo instante (típico al probar rápido),
+            // "¡GOOOL!" pisa el flash de "PENAL" antes de que se alcance a
+            // ver — en un partido real siempre hay varios segundos de por
+            // medio, pero preferimos no depender de eso.
+            this.encolar(() => this.secuenciaArmarPenal(numEquipoQueTira));
         } else {
-            this.ocultarFlashCentral();
-            this.reanudarSiNoHayMasOverrides();
+            // Resultado EXPLÍCITO (no inferido): TACTICA_PENAL_RESULTADO lo
+            // escribe Kotlin en el mismo clic que resuelve el penal, junto
+            // con apagar TACTICA_PENAL1/2. Si dice "FALLO", animamos el
+            // fallo. Si dice "GOL" (o no llega el dato, ej. se resolvió con
+            // los botones clásicos), no hacemos nada especial acá — la
+            // propia detección de GOLES1/2 ya dispara secuenciaGol() con su
+            // festejo por su cuenta.
+            const resultado = this.currentData ? this.currentData.TACTICA_PENAL_RESULTADO : null;
+            if (resultado === 'FALLO') {
+                this.encolar(() => this.secuenciaPenalFallo(numEquipoQueTira));
+            } else {
+                this.ocultarFlashCentral();
+                this.reanudarSiNoHayMasOverrides();
+            }
         }
+    }
+
+    /** Penal fallado: el balón se queda en el arco (atajado/afuera), nunca cruza la línea */
+    async secuenciaPenalFallo(numEquipoQueTira) {
+        const arcoRivalX = this.arcoQueAtaca(numEquipoQueTira);
+        const signo = this.direccionHaciaCentro(arcoRivalX);
+
+        this.moverBalon(arcoRivalX + signo * -30, CENTRO_CANCHA.y, 700);
+        this.mostrarFlashCentral('FALLÓ EL PENAL', 'corner'); // reutiliza el estilo (amarillo) del córner/fallo
+        await this.sleep(1800);
+        this.ocultarFlashCentral();
+
+        this.aplicarPosiciones(1, FORMACION_EQUIPO1);
+        this.aplicarPosiciones(2, FORMACION_EQUIPO2);
+        this.moverBalon(CENTRO_CANCHA.x, CENTRO_CANCHA.y, 1300);
+        await this.sleep(1300);
+
+        if (this.estadoCancha === 'JUEGO') this.iniciarWander();
+    }
+
+    async secuenciaArmarPenal(numEquipoQueTira) {
+        this.detenerWander();
+
+        const arcoRivalX = this.arcoQueAtaca(numEquipoQueTira);
+        const signo = this.direccionHaciaCentro(arcoRivalX);
+        const idxPateador = 9; // delantero fijo como pateador (simplificación: no sabemos quién cobra realmente)
+
+        if (!this.expulsados[numEquipoQueTira].has(idxPateador)) {
+            this.moverJugador(numEquipoQueTira, idxPateador, arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1300);
+        }
+        this.moverBalon(arcoRivalX + signo * -90, CENTRO_CANCHA.y, 1300);
+        this.mostrarFlashCentral('PENAL', 'penal');
+
+        // Tiempo mínimo garantizado: cualquier otra secuencia encolada (ej.
+        // secuenciaGol si el gol llega casi al instante) espera a que termine
+        // este await antes de poder pisar el flash central.
+        await this.sleep(1800);
     }
 
     /**
@@ -1075,8 +1120,8 @@ class PanelTactica {
         if (subio('GOLES1')) this.encolar(() => this.secuenciaGol(1));
         if (subio('GOLES2')) this.encolar(() => this.secuenciaGol(2));
 
-        if (subio('ESQUINAS1')) this.encolar(() => this.secuenciaCorner(1));
-        if (subio('ESQUINAS2')) this.encolar(() => this.secuenciaCorner(2));
+        if (subio('ESQUINAS1')) this.encolar(() => this.secuenciaCorner(1, actual.TACTICA_ESQUINA_BANDA));
+        if (subio('ESQUINAS2')) this.encolar(() => this.secuenciaCorner(2, actual.TACTICA_ESQUINA_BANDA));
 
         if (subio('TAMARILLAS1')) this.mostrarTarjeta(1, 'amarilla');
         if (subio('TAMARILLAS2')) this.mostrarTarjeta(2, 'amarilla');
@@ -1248,13 +1293,19 @@ class PanelTactica {
     // ============================================================
     // SECUENCIA: TIRO DE ESQUINA
     // ============================================================
-    async secuenciaCorner(numEquipoCobra) {
+    async secuenciaCorner(numEquipoCobra, bandaReal) {
         this.detenerWander();
 
         const arcoRivalX = this.arcoQueAtaca(numEquipoCobra);
         const esquinaArribaY = 55;
         const esquinaAbajoY = 845;
-        const esquinaY = Math.random() < 0.5 ? esquinaArribaY : esquinaAbajoY;
+        // Si viene el dato real (cargado desde la Cancha de Control en Kotlin,
+        // que sabe exactamente qué esquina se tocó), lo usamos. Si no hay dato
+        // (ej. se cargó con los botones clásicos de ControlPartidoTab, que no
+        // distinguen arriba/abajo), queda al azar como respaldo.
+        const esquinaY = bandaReal === 'ARRIBA' ? esquinaArribaY
+            : bandaReal === 'ABAJO' ? esquinaAbajoY
+            : (Math.random() < 0.5 ? esquinaArribaY : esquinaAbajoY);
         const signo = this.direccionHaciaCentro(arcoRivalX);
 
         const idxCobrador = this.expulsados[numEquipoCobra].has(9) ? 8 : 9;
