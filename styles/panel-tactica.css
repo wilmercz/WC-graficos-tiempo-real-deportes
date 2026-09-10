@@ -218,7 +218,7 @@
     top: 6%;
     left: 50%;
     transform: translateX(-50%);
-    height: 75%;
+    height: 85%;
     aspect-ratio: 1600 / 980; /* fuerza la proporción exacta de la cancha, así el
                                  borde queda pegado al césped y no deja margen
                                  invisible a los costados (causa del desajuste) */
