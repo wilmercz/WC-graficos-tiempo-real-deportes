@@ -98,14 +98,120 @@
     font-weight: bold;
     transform: skewX(-10deg);
 }
+/* Fila: [goles1] [cápsula estado/cronómetro] [goles2] */
 .portada-score-wrapper {
-    margin-top: 25px;
-    font-size: 48px; /* Goles mucho más grandes */
-    color: #ffffff;
-    font-weight: 900; /* Extra Bold */
-    text-shadow: 0 0 20px rgba(255, 138, 61, 0.4); /* Resplandor sutil con el color de contraste */
-    letter-spacing: 5px;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    opacity: 0;
+    animation: cardEntrance 0.8s forwards 0.9s;
+    transform: translateY(40px);
 }
+
+.portada-gol {
+    min-width: 70px;
+    text-align: center;
+    font-size: 64px;
+    line-height: 1;
+    color: #ffffff;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 20px rgba(255, 138, 61, 0.4); /* Resplandor sutil con el color de contraste */
+}
+
+/* --- CÁPSULA DE ESTADO / CRONÓMETRO --- */
+.portada-crono {
+    --crono-acento: #ff8a3d;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 26px 12px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 3px solid var(--crono-acento);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.4s ease;
+}
+
+.portada-crono-periodo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    color: var(--crono-acento);
+    text-transform: uppercase;
+}
+
+.portada-crono-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--crono-acento);
+}
+
+.portada-crono-tiempo {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+#portada-crono-reloj {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1;
+    color: #ffffff;
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 1px 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Minutos añadidos (+5) */
+.portada-crono-extra {
+    display: none;
+    font-size: 16px;
+    font-weight: 900;
+    color: #ffffff;
+    background: var(--crono-acento);
+    padding: 3px 8px;
+    border-radius: 6px;
+    transform: skewX(-10deg);
+}
+.portada-crono-extra.visible {
+    display: inline-block;
+    animation: escudoEntrance 0.4s ease-out;
+}
+
+/* Estados sin reloj: solo el texto, sin línea de periodo */
+.portada-crono.solo-texto .portada-crono-periodo { display: none; }
+.portada-crono.solo-texto {
+    padding: 16px 28px;
+}
+.portada-crono.solo-texto #portada-crono-reloj {
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: var(--crono-acento);
+}
+
+/* Colores por estado */
+.portada-crono.en-vivo      { --crono-acento: #ff3b3b; }
+.portada-crono.en-vivo .portada-crono-dot {
+    box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.7);
+    animation: cronoLive 1.4s infinite;
+}
+.portada-crono.pausa        { --crono-acento: #ff8a3d; }
+.portada-crono.pausa #portada-crono-reloj { animation: cronoPausa 1.2s infinite ease-in-out; }
+.portada-crono.por-jugarse  { --crono-acento: #d9e4ff; }
+.portada-crono.entretiempo  { --crono-acento: #ffd166; }
+.portada-crono.finalizado   { --crono-acento: #ff5a5a; }
+.portada-crono.penales      { --crono-acento: #ff8a3d; }
 
 /* --- NUEVO PANEL DE ETAPA --- */
 .portada-etapa-overlay {
@@ -166,11 +272,13 @@
     to   { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-.info-status {
-    position: absolute;
-    bottom: 40px;
-    text-transform: uppercase;
-    letter-spacing: 6px;
-    font-size: 12px;
-    color: #ff8a3d; /* Resalta el estado con el naranja de contraste */
+@keyframes cronoLive {
+    0%   { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(255, 59, 59, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
+}
+
+@keyframes cronoPausa {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
 }

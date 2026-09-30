@@ -4,11 +4,16 @@ class PanelPortada {
         this.container = document.getElementById('panel-portada');
         this.partidoRef = this.db.ref('/ARKI_DEPORTES/PARTIDOACTUAL');
         this.logoUrl = 'https://res.cloudinary.com/dm5jp6bbj/image/upload/v1773680088/LOGO_ARKI_MEDES_BLANCO_m2otas.png';
+
+        this.serverTimeOffset = 0;
+        this.intervalTimer = null; // cronómetro de la portada
+        this.currentData = null;
     }
 
     initialize() {
         if (!this.container) return;
         this.renderBase();
+        this.listenServerTime();
         this.listenFirebase();
     }
 
@@ -35,18 +40,37 @@ class PanelPortada {
                 </div>
 
                 <div class="portada-score-wrapper" id="portada-score-final">
-                    <span id="portada-goles1">0</span> - <span id="portada-goles2">0</span>
-                </div>
+                    <span class="portada-gol" id="portada-goles1">0</span>
 
-                <div class="info-status" id="portada-estado">POR COMENZAR</div>
+                    <!-- Estado / cronómetro real del partido (misma lógica que el marcador) -->
+                    <div class="portada-crono por-jugarse solo-texto" id="portada-crono">
+                        <div class="portada-crono-periodo">
+                            <span class="portada-crono-dot"></span>
+                            <span id="portada-crono-periodo"></span>
+                        </div>
+                        <div class="portada-crono-tiempo">
+                            <span id="portada-crono-reloj">POR JUGARSE</span>
+                            <span class="portada-crono-extra" id="portada-crono-extra"></span>
+                        </div>
+                    </div>
+
+                    <span class="portada-gol" id="portada-goles2">0</span>
+                </div>
             </div>
         `;
+    }
+
+    listenServerTime() {
+        this.db.ref('.info/serverTimeOffset').on('value', snap => {
+            this.serverTimeOffset = snap.val() || 0;
+        });
     }
 
     listenFirebase() {
         this.partidoRef.on('value', (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
+            this.currentData = data;
 
             const mostrarPortada = data.MOSTRAR_PORTADA === true || data.MOSTRAR_PORTADA === 'true';
 
@@ -55,6 +79,7 @@ class PanelPortada {
                 this.container.classList.add('visible');
             } else {
                 this.container.classList.remove('visible');
+                this.detenerCronometro();
             }
         });
     }
@@ -88,9 +113,8 @@ class PanelPortada {
         document.getElementById('portada-goles1').textContent = data.GOLES1 ?? 0;
         document.getElementById('portada-goles2').textContent = data.GOLES2 ?? 0;
 
-        // Actualizar estado (ej: POR COMENZAR, FINALIZADO)
-        const estado = data.ESTADO_PARTIDO || 'POR COMENZAR';
-        document.getElementById('portada-estado').textContent = estado;
+        // Estado / cronómetro real (NumeroDeTiempo + motor FECHA_PLAY)
+        this.updateEstadoTiempo(data);
 
         // --- LÓGICA DE LA ETAPA ---
         const etapaValue = data.ETAPA;
@@ -111,6 +135,127 @@ class PanelPortada {
         const debeAlternar = !!etapaTexto;
         matchCardEl.classList.toggle('alternar', debeAlternar);
     }
+
+    // ============================================================
+    // ESTADO / CRONÓMETRO (misma lógica que panel-marcador.js)
+    // ============================================================
+
+    /**
+     * estado: 'en-vivo' | 'pausa' | 'por-jugarse' | 'entretiempo' | 'finalizado' | 'penales'
+     * Sin periodo (estados sin reloj) se oculta la línea superior y queda solo el texto.
+     */
+    setCrono(estado, reloj, periodo = '', extra = '') {
+        const cronoEl = document.getElementById('portada-crono');
+        cronoEl.className = `portada-crono ${estado}`;
+        cronoEl.classList.toggle('solo-texto', !periodo);
+
+        document.getElementById('portada-crono-periodo').textContent = periodo;
+        document.getElementById('portada-crono-reloj').textContent = reloj;
+
+        const extraEl = document.getElementById('portada-crono-extra');
+        extraEl.textContent = extra;
+        extraEl.classList.toggle('visible', !!extra);
+    }
+
+    updateEstadoTiempo(data) {
+        const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
+
+        switch (data.NumeroDeTiempo) {
+            case '1T':
+            case '3T':
+                this.iniciarCronometro();
+                if (enPausa) {
+                    this.detenerCronometro();
+                    this.actualizarTextoCronometro();
+                }
+                break;
+
+            case '2T':
+                this.detenerCronometro();
+                this.setCrono('entretiempo', 'ENTRETIEMPO');
+                break;
+
+            case '4T':
+                this.detenerCronometro();
+                this.setCrono('finalizado', 'FINALIZADO');
+                break;
+
+            case '5T':
+            case 'PENALES':
+                this.detenerCronometro();
+                this.setCrono('penales', 'PENALES');
+                break;
+
+            default: // '0T' o sin valor
+                this.detenerCronometro();
+                this.setCrono('por-jugarse', 'POR JUGARSE');
+                break;
+        }
+    }
+
+    iniciarCronometro() {
+        if (this.intervalTimer) return;
+        this.intervalTimer = setInterval(() => this.actualizarTextoCronometro(), 1000);
+        this.actualizarTextoCronometro();
+    }
+
+    actualizarTextoCronometro() {
+        const data = this.currentData;
+        if (!data) return;
+
+        const numeroTiempo = data.NumeroDeTiempo || '1T';
+        const tiempoJuegoEnMinutos = Number(data.TIEMPOJUEGO) || 45;
+
+        const startMs = parseFechaPlayToMs(data.FECHA_PLAY);
+        const pausaAcumuladaMs = (Number(data.CRONO_PAUSA_ACUMULADA) || 0) * 1000;
+        const offsetMs = (Number(data.CRONO_OFFSET) || 0) * 1000;
+        const enPausa = data.CRONO_EN_PAUSA === true || data.CRONO_EN_PAUSA === 'true';
+        const inicioPausaMs = parseFechaPlayToMs(data.CRONO_INICIO_PAUSA);
+        const limiteSegundos = tiempoJuegoEnMinutos * 60;
+
+        const nombresVisuales = { '1T': '1T', '3T': '2T' };
+        const periodo = nombresVisuales[numeroTiempo] || numeroTiempo;
+        const estado = enPausa ? 'pausa' : 'en-vivo';
+
+        if (startMs == null) {
+            this.setCrono(estado, '00:00', periodo);
+            return;
+        }
+
+        let now = Date.now() + this.serverTimeOffset;
+        if (enPausa && inicioPausaMs) now = inicioPausaMs;
+
+        const elapsedMs = (now - startMs) - pausaAcumuladaMs + offsetMs;
+        const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+
+        if (elapsedSeconds > 7200) this.detenerCronometro();
+
+        if (elapsedSeconds <= limiteSegundos) {
+            const minutos = Math.floor(elapsedSeconds / 60);
+            const segundos = elapsedSeconds % 60;
+            this.setCrono(estado, `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`, periodo);
+        } else {
+            // Tiempo extra: reloj clavado en el reglamentario + minutos añadidos
+            const reloj = `${String(tiempoJuegoEnMinutos).padStart(2, '0')}:00`;
+            const minutosExtra = Math.ceil((elapsedSeconds - limiteSegundos) / 60);
+            this.setCrono(estado, reloj, periodo, minutosExtra > 0 ? `+${minutosExtra}` : '');
+        }
+    }
+
+    detenerCronometro() {
+        if (this.intervalTimer) {
+            clearInterval(this.intervalTimer);
+            this.intervalTimer = null;
+        }
+    }
+}
+
+function parseFechaPlayToMs(fechaPlay) {
+    if (!fechaPlay) return null;
+    if (typeof fechaPlay === 'number') return fechaPlay;
+    if (typeof fechaPlay !== 'string') return null;
+    const ms = new Date(fechaPlay).getTime();
+    return Number.isFinite(ms) ? ms : null;
 }
 
 export default PanelPortada;
