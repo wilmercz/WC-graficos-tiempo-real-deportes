@@ -111,8 +111,31 @@ class PanelMarcador {
     }
 
     updateEquipos(data) {
-        document.getElementById('equipo-1').textContent = data.EQUIPO1 || 'EQUIPO 1';
-        document.getElementById('equipo-2').textContent = data.EQUIPO2 || 'EQUIPO 2';
+        const equipo1El = document.getElementById('equipo-1');
+        const equipo2El = document.getElementById('equipo-2');
+        equipo1El.textContent = data.EQUIPO1 || 'EQUIPO 1';
+        equipo2El.textContent = data.EQUIPO2 || 'EQUIPO 2';
+
+        this.ajustarTamanoNombre(equipo1El);
+        this.ajustarTamanoNombre(equipo2El);
+    }
+
+    /**
+     * Si el nombre supera el ancho máximo de la caja (max-width en CSS),
+     * reduce la letra de a 1px hasta que entre (mínimo 18px). Si aun así
+     * no entra, el CSS lo corta con "…".
+     */
+    ajustarTamanoNombre(el) {
+        const TAMANO_BASE = 28;
+        const TAMANO_MINIMO = 18;
+
+        let tamano = TAMANO_BASE;
+        el.style.fontSize = `${tamano}px`;
+
+        while (el.scrollWidth > el.clientWidth && tamano > TAMANO_MINIMO) {
+            tamano--;
+            el.style.fontSize = `${tamano}px`;
+        }
     }
 
     updateGoles(data) {

@@ -24,7 +24,7 @@
 .marcador-estado {
     text-align: center;
     padding: 6px 16px;
-    font-size: 20px;
+    font-size: 25px;
     font-weight: bold;
     border-radius: 6px 6px 0 0;
     /*display: inline-block; /* se mantiene compacto */
@@ -39,37 +39,46 @@
 /* Estado: Por Jugarse */
 .marcador-estado.por-jugarse {
     background-color: #006400; /* Verde oscuro */
-    font-size: 15px;
+    font-size: 17px;
     color: #ffffff;
 }
- 
+
 /* Estado: Entretiempo */
 .marcador-estado.entretiempo {
     background-color:  hsl(24, 98%, 33%); /* Naranja del tema */
-    font-size: 15px;
+    font-size: 17px;
     color: var(--color-texto-primario);
 }
  
 /* Estado dinámico para cuando el partido ha finalizado */
 .marcador-estado.finalizado {
     background-color: #b30000; /* Rojo oscuro para indicar finalización */
-    font-size: 15px;
+    font-size: 17px;
     color: #ffffff;
 }
  
-/* Cuerpo */
+/* Cuerpo
+   Grid 1fr | auto | 1fr: las dos columnas de equipo SIEMPRE miden lo mismo
+   (el ancho del nombre más largo), así los goles quedan exactamente al
+   centro y la barra de estado/cronómetro queda alineada sobre ellos. */
 .marcador-body {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
 }
- 
+
 /* Equipos */
 .marcador-equipo {
-    display: inline-block;
+    --marcador-equipo-max: 320px; /* tope de ancho; nombres más largos reducen la letra (ver panel-marcador.js) */
+    box-sizing: border-box;
     padding: 7px 18px;
     font-size: 28px;
+    line-height: 32px; /* alto fijo: si la letra se reduce, la caja no cambia de altura */
     font-weight: bold;
     min-width: 160px;
+    max-width: var(--marcador-equipo-max);
+    overflow: hidden;
+    text-overflow: ellipsis; /* último recurso si aun con la letra mínima no entra */
     text-align: center;
  
     background: linear-gradient(

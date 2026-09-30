@@ -41,8 +41,12 @@
 }
 
 /* Contenedor de encuentro (Diseño para no poner letras al aire) */
+/* Grid 1fr | auto | 1fr: los dos bloques de equipo SIEMPRE miden lo mismo
+   (el ancho del nombre más largo), así el VS queda al centro exacto y la
+   fila de goles/cronómetro de abajo queda alineada con él. */
 .portada-match-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 30px;
     background: rgba(255, 255, 255, 0.1);
@@ -82,6 +86,13 @@
 }
 
 .portada-team {
+    --portada-team-max: 360px; /* tope de ancho; nombres más largos reducen la letra (ver panel-portada.js) */
+    max-width: var(--portada-team-max);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* último recurso si aun con la letra mínima no entra */
+    text-align: center;
+    line-height: 38px; /* alto fijo: si la letra se reduce, el bloque no cambia de altura */
     font-size: 32px; /* Reducido un poco más para elegancia */
     font-weight: 900;
     color: white;

@@ -75,8 +75,10 @@ class PanelPortada {
             const mostrarPortada = data.MOSTRAR_PORTADA === true || data.MOSTRAR_PORTADA === 'true';
 
             if (mostrarPortada) {
-                this.updatePanel(data);
+                // Primero visible: ajustarTamanoNombre() necesita medir el
+                // texto y con display:none todo mide 0.
                 this.container.classList.add('visible');
+                this.updatePanel(data);
             } else {
                 this.container.classList.remove('visible');
                 this.detenerCronometro();
@@ -100,10 +102,32 @@ class PanelPortada {
         }
     }
 
+    /**
+     * Si el nombre supera el ancho máximo (max-width en CSS), reduce la
+     * letra de a 1px hasta que entre (mínimo 20px). Si aun así no entra,
+     * el CSS lo corta con "…".
+     */
+    ajustarTamanoNombre(el) {
+        const TAMANO_BASE = 32;
+        const TAMANO_MINIMO = 20;
+
+        let tamano = TAMANO_BASE;
+        el.style.fontSize = `${tamano}px`;
+
+        while (el.scrollWidth > el.clientWidth && tamano > TAMANO_MINIMO) {
+            tamano--;
+            el.style.fontSize = `${tamano}px`;
+        }
+    }
+
     updatePanel(data) {
         // Actualizar nombres de equipos
-        document.getElementById('portada-equipo1').textContent = data.EQUIPO1 || 'EQUIPO 1';
-        document.getElementById('portada-equipo2').textContent = data.EQUIPO2 || 'EQUIPO 2';
+        const equipo1El = document.getElementById('portada-equipo1');
+        const equipo2El = document.getElementById('portada-equipo2');
+        equipo1El.textContent = data.EQUIPO1 || 'EQUIPO 1';
+        equipo2El.textContent = data.EQUIPO2 || 'EQUIPO 2';
+        this.ajustarTamanoNombre(equipo1El);
+        this.ajustarTamanoNombre(equipo2El);
 
         // Actualizar escudos (solo si el link existe)
         this.toggleEscudo('portada-escudo1', data.ESCUDO1_URL);
