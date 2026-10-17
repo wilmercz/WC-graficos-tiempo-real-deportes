@@ -27,30 +27,34 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 24px 40px 30px;
+    padding: 18px 40px 30px;
     box-sizing: border-box;
 }
 
 /* ---------- BARRA SUPERIOR ---------- */
 .tactica-topbar {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    gap: 36px;
+    gap: 28px;
     flex: 0 0 auto;
 }
 
 .tactica-equipo-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 22px;
     position: relative;
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 14px;
-    padding: 8px 22px;
-    min-width: 240px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    padding: 14px 26px;
+    flex: 1 1 0;
+    max-width: 660px;
+    min-width: 0;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 
 .tactica-equipo-info.equipo-izq {
@@ -64,22 +68,27 @@
 
 .tactica-escudo {
     display: none;
-    width: 48px;
-    height: 48px;
+    flex: 0 0 auto;
+    width: 110px;
+    height: 110px;
     object-fit: contain;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
 }
 .tactica-escudo.visible {
     display: block;
 }
 
 .tactica-nombre {
-    font-size: 16px;
+    font-size: 40px;
     font-weight: 900;
+    line-height: 1.05;
     color: #fff;
+    text-align: center;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-shadow: 1px 2px 6px rgba(0,0,0,0.4);
+    letter-spacing: 1px;
+    text-shadow: 2px 3px 8px rgba(0,0,0,0.5);
+    /* Nombres largos bajan a una 2da línea en vez de desbordar el bloque */
+    overflow-wrap: anywhere;
 }
 
 /* Agrupa el nombre y, debajo, el conteo de tarjetas (separado del marcador de goles) */
@@ -87,24 +96,28 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 /* Recuadro naranja resaltando el número de goles, con el dígito en blanco */
 .tactica-goles-box {
+    flex: 0 0 auto;
     background: linear-gradient(160deg, #ff8a3d, #ff5a3d);
-    border-radius: 10px;
-    padding: 4px 16px;
-    min-width: 30px;
+    border-radius: 16px;
+    padding: 6px 22px;
+    min-width: 70px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(255, 138, 61, 0.4);
+    box-shadow: 0 6px 18px rgba(255, 138, 61, 0.45);
 }
 
 .tactica-goles {
-    font-size: 20px;
+    font-size: 84px;
     font-weight: 900;
+    line-height: 1;
     color: #ffffff;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.35);
+    text-shadow: 2px 3px 4px rgba(0,0,0,0.35);
 }
 
 .tactica-central-col {
@@ -112,15 +125,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 8px;
+    flex: 0 0 auto;
 }
 
 .tactica-campeonato {
-    font-size: 13px;
+    font-size: 22px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.85);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
     /* Si no hay campeonato cargado, no ocupa espacio extra */
     min-height: 1em;
@@ -128,13 +143,16 @@
 
 .tactica-estado-central {
     flex: 0 0 auto;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 12px 30px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    padding: 14px 36px;
     color: #fff;
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums; /* el cronómetro no "baila" al cambiar dígitos */
+    white-space: nowrap;
     letter-spacing: 2px;
     text-transform: uppercase;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
@@ -149,21 +167,22 @@
     display: none; /* se activa por JS solo si hay tarjetas que mostrar */
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 8px;
 }
 
 .mini-tarjeta {
     display: inline-block;
-    width: 10px;
-    height: 14px;
-    border-radius: 2px;
+    width: 18px;
+    height: 26px;
+    border-radius: 3px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 .mini-tarjeta.mini-amarilla { background: linear-gradient(160deg, #ffe066, #f4b400); }
 .mini-tarjeta.mini-roja { background: linear-gradient(160deg, #ff5a5a, #c81e1e); }
 
 .mini-conteo {
-    font-size: 14px;
+    font-size: 24px;
+    margin-right: 6px;
     font-weight: 800;
     color: #fff;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
@@ -172,10 +191,10 @@
 /* Tarjetas amarilla/roja junto al bloque del equipo */
 .tactica-tarjeta-flash {
     position: absolute;
-    top: -14px;
-    width: 26px;
-    height: 36px;
-    border-radius: 4px;
+    top: -20px;
+    width: 46px;
+    height: 64px;
+    border-radius: 6px;
     opacity: 0;
     transform: scale(0.4) rotate(-12deg);
     transition: opacity 0.25s ease, transform 0.25s ease;
@@ -209,16 +228,16 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    margin-top: 8px;
+    margin-top: 10px;
     min-height: 0;
 }
 
 .tactica-svg {
     position: absolute;
-    top: 6%;
+    top: 4%;
     left: 50%;
     transform: translateX(-50%);
-    height: 85%;
+    height: 82%;
     aspect-ratio: 1600 / 980; /* fuerza la proporción exacta de la cancha, así el
                                  borde queda pegado al césped y no deja margen
                                  invisible a los costados (causa del desajuste) */
@@ -423,10 +442,10 @@
    así un gol saca a la hinchada por encima de la lista sin nada especial. */
 .tactica-lista-alineacion {
     position: absolute;
-    top: 6%;
-    bottom: 6%;
+    top: 4%;
+    bottom: 14%; /* termina a la misma altura que la cancha (top 4% + height 82%) */
     width: 17%;
-    max-width: 220px;
+    max-width: 290px;
     z-index: 2;
     display: none; /* JS lo pone en 'flex' cuando hay datos */
     flex-direction: column;
@@ -443,7 +462,7 @@
 .lista-der { right: 0%; border-right: 3px solid rgba(255, 138, 61, 0.2); }
 
 .tactica-lista-titulo {
-    font-size: 7px;
+    font-size: 13px;
     font-weight: 900;
     color: #ff8a3d;
     letter-spacing: 1px;
@@ -477,17 +496,17 @@
     display: flex;
     align-items: baseline;
     gap: 6px;
-    font-size: 7px;
-    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .tactica-lista-numero {
-    font-weight: 400;
+    font-weight: 700;
     color: #ff8a3d;
-    min-width: 16px;
+    min-width: 22px;
 }
 .tactica-lista-nombre {
     overflow: hidden;
