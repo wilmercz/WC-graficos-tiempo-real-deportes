@@ -698,3 +698,155 @@
     0%, 100% { filter: brightness(1); }
     50% { filter: brightness(1.15); }
 }
+/* ===============================
+   FELICITACIÓN AL GANADOR (fin del partido)
+   =============================== */
+/* z-index 3: encima de la franja inferior (va después en el DOM) y de las
+   listas (2), pero debajo de la hinchada (4) para que esta siga viéndose. */
+.tactica-celebracion {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(5, 12, 30, 0.45) 0%, rgba(5, 12, 30, 0.85) 100%);
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    transition: opacity 0.6s ease;
+}
+.tactica-celebracion.mostrar {
+    opacity: 1;
+}
+
+.tactica-celebracion-card {
+    position: relative;
+    overflow: hidden; /* las capas deslizantes no se salen del recuadro */
+    min-width: 900px;
+    max-width: 1500px;
+    padding: 40px 80px 46px;
+    border: 4px solid #ffd166;
+    border-radius: 26px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(255, 209, 102, 0.35), 0 30px 60px rgba(0, 0, 0, 0.55);
+    transform: scale(0.7);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tactica-celebracion.mostrar .tactica-celebracion-card {
+    transform: scale(1);
+}
+
+/* Mismas capas (blanca/naranja/azul) que el flash de gol */
+.tactica-celebracion.mostrar .tactica-capa-blanca {
+    animation: tacticaSlideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tactica-celebracion.mostrar .tactica-capa-naranja {
+    animation: tacticaSlideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+}
+.tactica-celebracion.mostrar .tactica-capa-azul {
+    animation: tacticaSlideInRight 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+}
+
+.tactica-cel-contenido {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #fff;
+    text-transform: uppercase;
+}
+.tactica-cel-contenido > * {
+    opacity: 0;
+}
+.tactica-celebracion.mostrar .tactica-cel-titulo {
+    animation: tacticaTextPopIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.45s,
+               celebracionBrillo 1.6s ease-in-out infinite 1.4s;
+}
+.tactica-celebracion.mostrar .tactica-cel-equipo {
+    animation: tacticaTextPopIn 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.7s;
+}
+.tactica-celebracion.mostrar .tactica-cel-marcador,
+.tactica-celebracion.mostrar .tactica-cel-penales {
+    animation: tacticaTextPopIn 0.8s forwards ease-out 0.95s;
+}
+
+.tactica-cel-titulo {
+    font-size: 60px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #ffd166;
+    text-shadow: 2px 3px 10px rgba(0, 0, 0, 0.6);
+}
+
+.tactica-cel-equipo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+}
+.tactica-cel-escudo {
+    display: none; /* JS lo muestra si hay URL */
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
+}
+.tactica-cel-nombre {
+    font-size: 84px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: 2px;
+    text-shadow: 3px 4px 12px rgba(0, 0, 0, 0.6);
+    overflow-wrap: anywhere;
+}
+
+.tactica-cel-marcador {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    white-space: pre; /* respeta el doble espacio alrededor del marcador */
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+}
+.tactica-cel-penales {
+    display: none;
+    margin-top: -6px;
+    padding: 6px 26px;
+    border-radius: 12px;
+    background: linear-gradient(160deg, #ff8a3d, #ff5a3d);
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    box-shadow: 0 6px 18px rgba(255, 138, 61, 0.45);
+}
+
+@keyframes celebracionBrillo {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.06); filter: brightness(1.25); }
+}
+
+/* Confeti cayendo detrás del recuadro */
+.tactica-confeti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.tactica-confeti span {
+    position: absolute;
+    top: -40px;
+    border-radius: 2px;
+    opacity: 0;
+}
+.tactica-celebracion.mostrar .tactica-confeti span {
+    animation-name: confetiCae;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+@keyframes confetiCae {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 1; transform: translateY(115vh) rotate(720deg); }
+}

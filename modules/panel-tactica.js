@@ -65,6 +65,9 @@ const CENTRO_CANCHA = { x: 800, y: 450 };
 const ARCO_EQUIPO1_X = 40;   // arco que defiende el equipo 1
 const ARCO_EQUIPO2_X = 1560; // arco que defiende el equipo 2
 
+// Cuánto tiempo queda en pantalla la felicitación al ganador antes de ocultarse sola
+const DURACION_CELEBRACION_MS = 12000;
+
 function parseFechaPlayToMs(fechaPlay) {
     if (!fechaPlay) return null;
     if (typeof fechaPlay === 'number') return fechaPlay;
@@ -109,6 +112,10 @@ class PanelTactica {
         this.logoRotativoIndex = 0;
         this.logosRotativosInterval = null;
         this.expulsados = { 1: new Set(), 2: new Set() };
+
+        // Partido+ganador ya felicitado, para no repetir la celebración si
+        // llegan varias actualizaciones de Firebase con el mismo resultado
+        this.celebracionKey = null;
 
         // Cola simple para no solapar secuencias (gol/córner/expulsión)
         this.colaSecuencias = [];
@@ -279,6 +286,27 @@ class PanelTactica {
                         <img class="tactica-logo-rotativo-img" id="tactica-logo-rotativo-img" alt="Logo patrocinador">
                     </div>
                 </div>
+
+                <!-- Felicitación al ganador al final del partido (se oculta sola).
+                     Va después de la franja inferior para quedar por encima de ella,
+                     pero con z-index menor que la hinchada para que esta se vea. -->
+                <div class="tactica-celebracion" id="tactica-celebracion">
+                    <div class="tactica-confeti">${this.generarConfeti(40)}</div>
+                    <div class="tactica-celebracion-card">
+                        <div class="tactica-flash-capa tactica-capa-blanca"></div>
+                        <div class="tactica-flash-capa tactica-capa-naranja"></div>
+                        <div class="tactica-flash-capa tactica-capa-azul"></div>
+                        <div class="tactica-cel-contenido">
+                            <div class="tactica-cel-titulo" id="tactica-cel-titulo"></div>
+                            <div class="tactica-cel-equipo">
+                                <img class="tactica-cel-escudo" id="tactica-cel-escudo" alt="Escudo del ganador">
+                                <span class="tactica-cel-nombre" id="tactica-cel-nombre"></span>
+                            </div>
+                            <div class="tactica-cel-marcador" id="tactica-cel-marcador"></div>
+                            <div class="tactica-cel-penales" id="tactica-cel-penales"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -332,7 +360,20 @@ class PanelTactica {
         return html;
     }
 
-
+    /** Papelitos de colores para la felicitación final (caen en bucle mientras se muestra) */
+    generarConfeti(cantidad) {
+        const colores = ['#ffd166', '#ff8a3d', '#ffffff', '#4fc3f7', '#ef476f', '#06d6a0'];
+        let html = '';
+        for (let i = 0; i < cantidad; i++) {
+            const izquierda = (Math.random() * 100).toFixed(1);
+            const retraso = (Math.random() * 3).toFixed(2);
+            const duracion = (3 + Math.random() * 3).toFixed(2);
+            const ancho = 8 + Math.floor(Math.random() * 8);
+            const color = colores[i % colores.length];
+            html += `<span style="left:${izquierda}%;width:${ancho}px;height:${ancho * 1.6}px;background:${color};animation-delay:${retraso}s;animation-duration:${duracion}s"></span>`;
+        }
+        return html;
+    }
 
     /**
      * Muestra la hinchada del equipo que anotó, desde las 2 esquinas del
@@ -518,6 +559,7 @@ class PanelTactica {
             // falsas.
             if (!this.primeraCarga) {
                 this.detectarEventos(this.prevData, data);
+                this.detectarFinDePartido(this.prevData, data);
             } else {
                 this.primeraCarga = false;
             }
@@ -1011,6 +1053,7 @@ class PanelTactica {
                 this.pasarABanca();
                 // Nuevo partido: se limpian las expulsiones del encuentro anterior
                 this.expulsados = { 1: new Set(), 2: new Set() };
+                this.ocultarCelebracion();
                 break;
 
             case '1T':
@@ -1388,6 +1431,121 @@ class PanelTactica {
         const el = document.getElementById('tactica-flash-central');
         if (!el) return;
         el.classList.remove('mostrar');
+    }
+
+    // ============================================================
+    // FELICITACIÓN AL GANADOR (fin del partido)
+    // ============================================================
+    // Se dispara en cualquiera de los 3 caminos con los que Kotlin cierra un
+    // partido: pasa a '4T' con un ganador por goles, se apaga
+    // MARCADOR_PENALES al terminar la tanda (finalizarPartidoDesdePenales),
+    // o llega un NOMBREGANADOR nuevo (forzarCalculoGanador). El ganador se
+    // calcula aquí con goles/penales en vez de leer NOMBREGANADOR, porque al
+    // terminar por penales Kotlin no escribe ese campo en PARTIDOACTUAL.
+    detectarFinDePartido(anterior, actual) {
+        if (!anterior) return;
+        const esTrue = (v) => v === true || v === 'true';
+
+        const finNormal = anterior.NumeroDeTiempo !== '4T' && actual.NumeroDeTiempo === '4T';
+        const finPenales = esTrue(anterior.MARCADOR_PENALES) && !esTrue(actual.MARCADOR_PENALES);
+        const nuevoGanador = !!actual.NOMBREGANADOR && actual.NOMBREGANADOR !== anterior.NOMBREGANADOR;
+        if (!finNormal && !finPenales && !nuevoGanador) return;
+        if (esTrue(actual.MARCADOR_PENALES)) return; // la tanda sigue en curso, todavía no hay ganador
+
+        const ganador = this.determinarGanador(actual);
+        if (!ganador) return; // empate sin penales (ej. fase de grupos): no hay a quién felicitar
+
+        const key = `${actual.CODIGOPARTIDO || ''}|${ganador.numEquipo}`;
+        if (key === this.celebracionKey) return;
+        this.celebracionKey = key;
+
+        if (!this.container.classList.contains('visible')) return;
+        this.encolar(() => this.secuenciaCelebracion(ganador, actual));
+    }
+
+    /** Misma regla que Partido.calcularGanadorFinal() en Kotlin: goles y, si empatan, penales */
+    determinarGanador(data) {
+        const g1 = Number(data.GOLES1) || 0;
+        const g2 = Number(data.GOLES2) || 0;
+        const p1 = Number(data.PENALES1) || 0;
+        const p2 = Number(data.PENALES2) || 0;
+
+        let numEquipo = null;
+        let porPenales = false;
+        if (g1 > g2) numEquipo = 1;
+        else if (g2 > g1) numEquipo = 2;
+        else if (p1 !== p2) { numEquipo = p1 > p2 ? 1 : 2; porPenales = true; }
+        if (!numEquipo) return null;
+
+        return {
+            numEquipo,
+            nombre: (numEquipo === 1 ? data.EQUIPO1 : data.EQUIPO2) || `EQUIPO ${numEquipo}`,
+            escudo: numEquipo === 1 ? data.ESCUDO1_URL : data.ESCUDO2_URL,
+            g1, g2, p1, p2, porPenales
+        };
+    }
+
+    /** Mismos textos que prepararTextosProduccionGanador() en Kotlin, según la ETAPA */
+    tituloSegunEtapa(etapa) {
+        switch (Number(etapa)) {
+            case 3: return '¡FELICIDADES CAMPEÓN!';
+            case 2: return '¡NUEVO FINALISTA!';
+            case 1: return '¡CLASIFICADO A LA SIGUIENTE RONDA!';
+            default: return '¡VICTORIA!';
+        }
+    }
+
+    async secuenciaCelebracion(ganador, data) {
+        const el = document.getElementById('tactica-celebracion');
+        if (!el) return;
+
+        document.getElementById('tactica-cel-titulo').textContent = this.tituloSegunEtapa(data.ETAPA);
+        document.getElementById('tactica-cel-nombre').textContent = ganador.nombre;
+        document.getElementById('tactica-cel-marcador').textContent =
+            `${data.EQUIPO1 || 'EQUIPO 1'}  ${ganador.g1} - ${ganador.g2}  ${data.EQUIPO2 || 'EQUIPO 2'}`;
+
+        const penalesEl = document.getElementById('tactica-cel-penales');
+        penalesEl.textContent = ganador.porPenales ? `PENALES ${ganador.p1} - ${ganador.p2}` : '';
+        penalesEl.style.display = ganador.porPenales ? 'block' : 'none';
+
+        const escudoEl = document.getElementById('tactica-cel-escudo');
+        const urlValida = typeof ganador.escudo === 'string' && ganador.escudo.trim().length > 0;
+        if (urlValida) escudoEl.src = ganador.escudo; else escudoEl.removeAttribute('src');
+        escudoEl.style.display = urlValida ? 'block' : 'none';
+
+        this.detenerWander();
+        el.classList.remove('mostrar');
+        void el.offsetWidth; // reinicia las animaciones de capas y textos
+        el.classList.add('mostrar');
+        this.mostrarHinchada(ganador.numEquipo);
+
+        // Los jugadores del ganador se juntan en su mitad de cancha a festejar
+        const centroX = this.ladoActualDe(ganador.numEquipo) === 'IZQUIERDA' ? 520 : 1080;
+        const festejan = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(i => !this.expulsados[ganador.numEquipo].has(i));
+        festejan.forEach((idx, i) => {
+            const angulo = (i / festejan.length) * Math.PI * 2;
+            this.moverJugador(ganador.numEquipo, idx,
+                centroX + Math.cos(angulo) * 110, CENTRO_CANCHA.y + Math.sin(angulo) * 110, 1400);
+        });
+        const grupo = festejan.map(idx => document.getElementById(`tactica-j-t${ganador.numEquipo}-${idx}`)).filter(Boolean);
+        grupo.forEach(j => j.classList.add('celebrando'));
+
+        await this.sleep(DURACION_CELEBRACION_MS);
+
+        this.ocultarCelebracion();
+        grupo.forEach(j => j.classList.remove('celebrando'));
+
+        // Cada uno vuelve a donde corresponde según el estado actual del partido
+        const enJuego = this.estadoCancha === 'JUEGO';
+        this.aplicarPosiciones(1, enJuego ? FORMACION_EQUIPO1 : BANCA_EQUIPO1);
+        this.aplicarPosiciones(2, enJuego ? FORMACION_EQUIPO2 : BANCA_EQUIPO2);
+        await this.sleep(1300);
+        if (enJuego) this.iniciarWander();
+    }
+
+    ocultarCelebracion() {
+        document.getElementById('tactica-celebracion')?.classList.remove('mostrar');
+        this.ocultarHinchada();
     }
 
     // ============================================================
