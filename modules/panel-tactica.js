@@ -198,24 +198,16 @@ class PanelTactica {
                     <div class="tactica-hinchada esquina-bl" id="tactica-hinchada-bl">${this.generarSiluetas(3)}</div>
                     <div class="tactica-hinchada esquina-br" id="tactica-hinchada-br">${this.generarSiluetas(3)}</div>
 
-                    <!-- Alineación (titulares/suplentes), a los lados de la cancha.
+                    <!-- Alineación (solo titulares, para no recargar la pantalla), a los lados de la cancha.
                          z-index por debajo de la hinchada: si hay gol, la hinchada
                          igual sale por encima de la lista sin hacer nada especial. -->
                     <div class="tactica-lista-alineacion lista-izq" id="tactica-lista-1">
                         <div class="tactica-lista-titulo">TITULARES</div>
                         <div class="tactica-lista-jugadores" id="tactica-lista-titulares-1"></div>
-                        <div class="tactica-lista-titulo tactica-lista-titulo-supl">SUPLENTES</div>
-                        <div class="tactica-lista-jugadores tactica-lista-suplentes" id="tactica-lista-suplentes-1"></div>
-                        <div class="tactica-lista-titulo tactica-lista-titulo-cuerpo" id="tactica-lista-titulo-cuerpotecnico-1">CUERPO TÉCNICO</div>
-                        <div class="tactica-lista-jugadores tactica-lista-cuerpotecnico" id="tactica-lista-cuerpotecnico-1"></div>
                     </div>
                     <div class="tactica-lista-alineacion lista-der" id="tactica-lista-2">
                         <div class="tactica-lista-titulo">TITULARES</div>
                         <div class="tactica-lista-jugadores" id="tactica-lista-titulares-2"></div>
-                        <div class="tactica-lista-titulo tactica-lista-titulo-supl">SUPLENTES</div>
-                        <div class="tactica-lista-jugadores tactica-lista-suplentes" id="tactica-lista-suplentes-2"></div>
-                        <div class="tactica-lista-titulo tactica-lista-titulo-cuerpo" id="tactica-lista-titulo-cuerpotecnico-2">CUERPO TÉCNICO</div>
-                        <div class="tactica-lista-jugadores tactica-lista-cuerpotecnico" id="tactica-lista-cuerpotecnico-2"></div>
                     </div>
 
                     <svg id="tactica-svg" class="tactica-svg" viewBox="0 0 1600 980" preserveAspectRatio="xMidYMid meet">
@@ -411,7 +403,7 @@ class PanelTactica {
     }
 
     // ============================================================
-    // ALINEACIÓN (titulares + suplentes), a los lados de la cancha
+    // ALINEACIÓN (solo titulares), a los lados de la cancha
     // ============================================================
     // Fuente: /ARKI_DEPORTES/PARTIDOACTUAL/alineaciones/local (equipo1) y
     // .../visitante (equipo2), poblado por inicializarAlineacionesDesdeEquipos()
@@ -469,29 +461,20 @@ class PanelTactica {
     }
 
     renderizarAlineacion(numEquipo, mapaJugadores) {
-        const { titulares, suplentes, cuerpoTecnico } = clasificarAlineacion(mapaJugadores);
-
-        const armarFilas = (lista) => lista.map(j =>
-            `<div class="tactica-lista-fila"><span class="tactica-lista-numero">${j.numero}</span><span class="tactica-lista-nombre">${j.nombre}</span></div>`
-        ).join('');
+        // Solo titulares: suplentes y cuerpo técnico recargaban demasiado la pantalla
+        const { titulares } = clasificarAlineacion(mapaJugadores);
 
         const contTitulares = document.getElementById(`tactica-lista-titulares-${numEquipo}`);
-        const contSuplentes = document.getElementById(`tactica-lista-suplentes-${numEquipo}`);
-        const contCuerpoTecnico = document.getElementById(`tactica-lista-cuerpotecnico-${numEquipo}`);
-        if (contTitulares) contTitulares.innerHTML = armarFilas(titulares);
-        if (contSuplentes) contSuplentes.innerHTML = armarFilas(suplentes);
-        if (contCuerpoTecnico) contCuerpoTecnico.innerHTML = armarFilas(cuerpoTecnico);
+        if (contTitulares) {
+            contTitulares.innerHTML = titulares.map(j =>
+                `<div class="tactica-lista-fila"><span class="tactica-lista-numero">${j.numero}</span><span class="tactica-lista-nombre">${j.nombre}</span></div>`
+            ).join('');
+        }
 
-        // El título "CUERPO TÉCNICO" solo se muestra si hay alguien ahí (DT/asistentes)
-        const tituloCuerpoTecnico = document.getElementById(`tactica-lista-titulo-cuerpotecnico-${numEquipo}`);
-        if (tituloCuerpoTecnico) tituloCuerpoTecnico.style.display = cuerpoTecnico.length ? 'block' : 'none';
-        if (contCuerpoTecnico) contCuerpoTecnico.style.display = cuerpoTecnico.length ? 'flex' : 'none';
-
-        // Si aún no hay alineación cargada para este equipo, ocultamos el panel
+        // Si aún no hay titulares cargados para este equipo, ocultamos el panel
         // completo en vez de mostrar un recuadro vacío.
-        const totalPersonas = titulares.length + suplentes.length + cuerpoTecnico.length;
         const panelEl = document.getElementById(`tactica-lista-${numEquipo}`);
-        if (panelEl) panelEl.style.display = totalPersonas ? 'flex' : 'none';
+        if (panelEl) panelEl.style.display = titulares.length ? 'flex' : 'none';
     }
 
     listenFirebase() {

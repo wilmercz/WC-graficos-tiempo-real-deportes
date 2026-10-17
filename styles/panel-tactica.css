@@ -254,7 +254,7 @@
 /* Logo del medio "pintado" en el gramado. Ajusta solo este número (0 a 1)
    para probar el nivel de transparencia ideal. */
 .tactica-marca-agua {
-    opacity: 0.08;
+    opacity: 0.25;
     pointer-events: none;
 }
 
@@ -437,24 +437,23 @@
 }
 
 /* Hinchada: siluetas que entran desde las esquinas al celebrar un gol */
-/* Alineación (titulares/suplentes) a los lados de la cancha.
+/* Alineación (solo titulares) a los lados de la cancha; el alto se ajusta a las 11 filas.
    z-index: 2, por debajo de la hinchada (4) y del cintillo de sede (3) —
    así un gol saca a la hinchada por encima de la lista sin nada especial. */
 .tactica-lista-alineacion {
     position: absolute;
     top: 4%;
-    bottom: 20%; /* termina a la misma altura que la cancha (top 4% + height 76%) */
     width: 17%;
     max-width: 290px;
     z-index: 2;
     display: none; /* JS lo pone en 'flex' cuando hay datos */
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
     background: rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
-    padding: 10px 8px;
+    padding: 14px 14px;
     overflow: hidden; /* sin scroll: lo que no entra se recorta */
     pointer-events: none;
 }
@@ -462,7 +461,7 @@
 .lista-der { right: 0%; border-right: 3px solid rgba(255, 138, 61, 0.2); }
 
 .tactica-lista-titulo {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 900;
     color: #ff8a3d;
     letter-spacing: 1px;
@@ -470,34 +469,19 @@
     text-transform: uppercase;
     opacity: 0.9;
 }
-.tactica-lista-titulo-supl {
-    margin-top: 6px;
-    color: rgba(255, 255, 255, 0.6);
-}
-.tactica-lista-titulo-cuerpo {
-    margin-top: 6px;
-    color: #8ecae6;
-}
 
 .tactica-lista-jugadores {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-}
-.tactica-lista-suplentes .tactica-lista-nombre {
-    color: rgba(255, 255, 255, 0.50);
-}
-.tactica-lista-cuerpotecnico {
-    opacity: 0.75;
-    font-style: italic;
+    gap: 6px;
 }
 
 .tactica-lista-fila {
     display: flex;
     align-items: baseline;
-    gap: 6px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
+    gap: 8px;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
@@ -506,7 +490,7 @@
 .tactica-lista-numero {
     font-weight: 700;
     color: #ff8a3d;
-    min-width: 22px;
+    min-width: 28px;
 }
 .tactica-lista-nombre {
     overflow: hidden;
