@@ -66,7 +66,7 @@ const ARCO_EQUIPO1_X = 40;   // arco que defiende el equipo 1
 const ARCO_EQUIPO2_X = 1560; // arco que defiende el equipo 2
 
 // Cuánto tiempo queda en pantalla la felicitación al ganador antes de ocultarse sola
-const DURACION_CELEBRACION_MS = 12000;
+const DURACION_CELEBRACION_MS = 17000;
 
 function parseFechaPlayToMs(fechaPlay) {
     if (!fechaPlay) return null;
@@ -208,6 +208,13 @@ class PanelTactica {
                     <div class="tactica-lista-alineacion lista-der" id="tactica-lista-2">
                         <div class="tactica-lista-titulo">TITULARES</div>
                         <div class="tactica-lista-jugadores" id="tactica-lista-titulares-2"></div>
+                    </div>
+
+                    <!-- Modo DOBLE PANTALLA (TACTICA_DOBLE_PANTALLA): ventana transparente
+                         a la izquierda para ver la cámara de CameraFi (reacción del público).
+                         Oculta en modo normal; ver .doble-pantalla en el CSS. -->
+                    <div class="tactica-ventana-camara">
+                        <span class="tactica-ventana-etiqueta"><span class="tactica-ventana-punto"></span>EN VIVO</span>
                     </div>
 
                     <svg id="tactica-svg" class="tactica-svg" viewBox="0 0 1600 980" preserveAspectRatio="xMidYMid meet">
@@ -504,6 +511,10 @@ class PanelTactica {
             } else {
                 this.container.classList.remove('visible');
             }
+
+            // Doble pantalla: cancha a la derecha + ventana a la cámara a la izquierda
+            const doblePantalla = data.TACTICA_DOBLE_PANTALLA === true || data.TACTICA_DOBLE_PANTALLA === 'true';
+            this.container.classList.toggle('doble-pantalla', doblePantalla);
 
             // ============================================================
             // Suprimir el recuadro clásico de "panel-gol" MIENTRAS la Cancha

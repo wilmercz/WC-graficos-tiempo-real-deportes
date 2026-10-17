@@ -457,8 +457,8 @@
     overflow: hidden; /* sin scroll: lo que no entra se recorta */
     pointer-events: none;
 }
-.lista-izq { left: 0%; border-left: 3px solid rgba(238, 244, 255, 0.2); }
-.lista-der { right: 0%; border-right: 3px solid rgba(255, 138, 61, 0.2); }
+.lista-izq { left: 2.5%; border-left: 3px solid rgba(238, 244, 255, 0.2); }
+.lista-der { right: 2.5%; border-right: 3px solid rgba(255, 138, 61, 0.2); }
 
 .tactica-lista-titulo {
     font-size: 16px;
@@ -833,4 +833,82 @@
 @keyframes confetiCae {
     0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
     100% { opacity: 1; transform: translateY(115vh) rotate(720deg); }
+}
+
+/* ===============================
+   DOBLE PANTALLA (TACTICA_DOBLE_PANTALLA)
+   Cancha a la derecha + ventana transparente a la izquierda para ver la
+   cámara de CameraFi (el overlay va encima de la cámara, la página tiene
+   fondo transparente).
+   =============================== */
+.tactica-ventana-camara {
+    display: none;
+}
+
+/* El fondo del panel lo pinta la sombra gigante de la ventana: todo queda
+   cubierto MENOS el rectángulo de la ventana, que es el "hueco". */
+#panel-tactica.doble-pantalla {
+    background: transparent;
+}
+
+.doble-pantalla .tactica-cancha-wrap {
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.doble-pantalla .tactica-ventana-camara {
+    display: block;
+    position: relative;
+    z-index: -1; /* debajo de todo el contenido del panel, incluida su propia sombra-fondo */
+    top: 4%;
+    height: 84%;
+    flex: 1 1 0;
+    min-width: 0;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    border-radius: 14px;
+    box-shadow:
+        0 0 0 4000px #0f2448,              /* fondo del panel alrededor del hueco */
+        inset 0 0 40px rgba(0, 0, 0, 0.35); /* leve viñeta en el borde del video */
+}
+
+/* La cancha deja de estar centrada: pasa a la derecha, mismo tamaño */
+.doble-pantalla .tactica-svg {
+    position: relative;
+    top: 4%;
+    left: auto;
+    transform: none;
+    flex: 0 0 auto;
+}
+
+/* Sin espacio para las alineaciones en este modo (el JS les pone display
+   en línea, por eso el !important) */
+.doble-pantalla .tactica-lista-alineacion {
+    display: none !important;
+}
+
+.tactica-ventana-etiqueta {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+.tactica-ventana-punto {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff3b3b;
+    animation: ventanaPunto 1.2s ease-in-out infinite;
+}
+@keyframes ventanaPunto {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
