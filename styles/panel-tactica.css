@@ -27,7 +27,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 38px 40px 30px;
+    padding: 118px 40px 30px; /* baja todo el bloque (marcador, cancha, titulares) hacia el centro */
     box-sizing: border-box;
 }
 
@@ -237,7 +237,7 @@
     top: 4%;
     left: 50%;
     transform: translateX(-50%);
-    height: 76%;
+    height: 84%; /* mantiene el mismo tamaño de cancha aunque el bloque bajó */
     aspect-ratio: 1600 / 980; /* fuerza la proporción exacta de la cancha, así el
                                  borde queda pegado al césped y no deja margen
                                  invisible a los costados (causa del desajuste) */
