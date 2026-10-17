@@ -68,6 +68,11 @@ const ARCO_EQUIPO2_X = 1560; // arco que defiende el equipo 2
 // Cuánto tiempo queda en pantalla la felicitación al ganador antes de ocultarse sola
 const DURACION_CELEBRACION_MS = 17000;
 
+// Cada cuánto se mueven solos los jugadores en juego. En doble pantalla es más
+// espaciado: menos tiempo animando = menos trabajo para CameraFi.
+const WANDER_MS = 3200;
+const WANDER_DOBLE_PANTALLA_MS = 9000;
+
 function parseFechaPlayToMs(fechaPlay) {
     if (!fechaPlay) return null;
     if (typeof fechaPlay === 'number') return fechaPlay;
@@ -116,6 +121,8 @@ class PanelTactica {
         // Partido+ganador ya felicitado, para no repetir la celebración si
         // llegan varias actualizaciones de Firebase con el mismo resultado
         this.celebracionKey = null;
+
+        this.doblePantalla = false; // TACTICA_DOBLE_PANTALLA (modo liviano)
 
         // Cola simple para no solapar secuencias (gol/córner/expulsión)
         this.colaSecuencias = [];
@@ -515,6 +522,10 @@ class PanelTactica {
             // Doble pantalla: cancha a la derecha + ventana a la cámara a la izquierda
             const doblePantalla = data.TACTICA_DOBLE_PANTALLA === true || data.TACTICA_DOBLE_PANTALLA === 'true';
             this.container.classList.toggle('doble-pantalla', doblePantalla);
+            if (doblePantalla !== this.doblePantalla) {
+                this.doblePantalla = doblePantalla;
+                if (this.wanderInterval) this.iniciarWander(); // reprograma con el nuevo ritmo
+            }
 
             // ============================================================
             // Suprimir el recuadro clásico de "panel-gol" MIENTRAS la Cancha
@@ -1240,7 +1251,7 @@ class PanelTactica {
     // ============================================================
     iniciarWander() {
         this.detenerWander();
-        this.wanderInterval = setInterval(() => this.tickWander(), 3200);
+        this.wanderInterval = setInterval(() => this.tickWander(), this.doblePantalla ? WANDER_DOBLE_PANTALLA_MS : WANDER_MS);
     }
 
     detenerWander() {
